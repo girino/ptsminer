@@ -517,7 +517,9 @@ int getArgInt(int argc, char **argv, const char* name, int def) {
 }
 
 void print_help(const char* _exec) {
-	std::cerr << "usage: " << _exec << " <payout-address> <threads-to-use> [memory-option] [mode]" << std::endl;
+	std::cerr << "usage: " << _exec << " -u <payout-address/username> [-p password] [-t <threads-to-use>] [-m <memory-option>] [-a <mode>] [-o <server>] [-q port]" << std::endl;
+	std::cerr << std::endl;
+	std::cerr << "defaults: -u '' -p x -t 1 -m 27 -a auto -o ptsmine.beeeeer.org -q 1337" << std::endl;
 	std::cerr << std::endl;
 	std::cerr << "memory-option: integer value - memory usage" << std::endl;
 	std::cerr << "\t\t20 -->    4 MB per thread (not recommended)" << std::endl;
@@ -538,7 +540,7 @@ void print_help(const char* _exec) {
 	std::cerr << "\t\tsph --> use SPHLIB" << std::endl;
 	std::cerr << std::endl;
 	std::cerr << "example:" << std::endl;
-	std::cerr << "> " << _exec << " PbfspbvSWxYqrp3DpRH7bsrmEqzY3418Ap 4 25 sse4" << std::endl;
+	std::cerr << "> " << _exec << " -u PkyeQNn1yGV5psGeZ4sDu6nz2vWHTujf4h -t 4 -m 25 -a sse4" << std::endl;
 }
 
 /*********************************
@@ -568,7 +570,7 @@ int main(int argc, char **argv)
 	pool_username = getArgStr(argc, argv, "-u", "");
 	pool_password = getArgStr(argc, argv, "-p", "x");
 	pool_address = getArgStr(argc, argv, "-o", "ptsmine.beeeeer.org");
-	pool_port = getArgStr(argc, argv, "-port", "1337");
+	pool_port = getArgStr(argc, argv, "-q", "1337");
 	std::string mode_param = getArgStr(argc, argv, "-a", "auto");
 
 	if (pool_username == "")

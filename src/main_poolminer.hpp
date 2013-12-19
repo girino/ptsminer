@@ -233,11 +233,13 @@ void protoshares_process_512(blockHeader_t* block, uint32_t* collisionIndices, C
                                 uint32_t collisionKey = (uint32_t)((birthday>>18) & COLLISION_KEY_MASK);
                                 birthday %= COLLISION_TABLE_SIZE;
                                 if( ((collisionIndices[birthday]&COLLISION_KEY_MASK) == collisionKey)) {
-                                		protoshares_revalidateCollision<shamode>(block, midHash, (collisionIndices[birthday]&~COLLISION_KEY_MASK)*8, i+f, bp, thread_id);
+                            		// try to avoid submitting bad shares
+                            		if (ob != bp->getOriginalBlock()) return;
+                               		protoshares_revalidateCollision<shamode>(block, midHash, (collisionIndices[birthday]&~COLLISION_KEY_MASK)*8, i+f, bp, thread_id);
                                         // invalid collision -> ignore or mark this entry as invalid?
                                 }
                                 collisionIndices[birthday] = (i/8) | collisionKey; // we have 6 bits available for validation
-								if (ob != bp->getOriginalBlock()) return;
+                        		if (ob != bp->getOriginalBlock()) return;
                         }
                 }
         }
