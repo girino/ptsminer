@@ -12,7 +12,7 @@
 
 #include "main_poolminer.hpp"
 
-#if defined(__GNUG__) && !defined(__MINGW32__) && !defined(__MINGW64__)
+#if defined(__GNUG__) && !defined(__MINGW32__) && !defined(__MINGW64__) &&!defined(__CYGWIN__)
 #include <sys/syscall.h>
 #include <sys/time.h> //depr?
 #include <sys/resource.h>
@@ -42,6 +42,8 @@ static bool running;
 static volatile int submitting_share;
 std::string pool_username;
 std::string pool_password;
+std::string pool_address;
+std::string pool_port;
 
 /*********************************
 * class CBlockProviderGW to (incl. SUBMIT_BLOCK)
@@ -163,27 +165,29 @@ public:
 	
 	template<SHAMODE shamode>
 	void mineloop_start() {
+#define kk 4
 		switch (COLLISION_TABLE_BITS) {
-			case 20: mineloop<(1<<20),(0xFFFFFFFF<<(32-(32-20))),shamode>(); break;
-			case 21: mineloop<(1<<21),(0xFFFFFFFF<<(32-(32-21))),shamode>(); break;
-			case 22: mineloop<(1<<22),(0xFFFFFFFF<<(32-(32-22))),shamode>(); break;
-			case 23: mineloop<(1<<23),(0xFFFFFFFF<<(32-(32-23))),shamode>(); break;
-			case 24: mineloop<(1<<24),(0xFFFFFFFF<<(32-(32-24))),shamode>(); break;
-			case 25: mineloop<(1<<25),(0xFFFFFFFF<<(32-(32-25))),shamode>(); break;
-			case 26: mineloop<(1<<26),(0xFFFFFFFF<<(32-(32-26))),shamode>(); break;
-			case 27: mineloop<(1<<27),(0xFFFFFFFF<<(32-(32-27))),shamode>(); break;
-			case 28: mineloop<(1<<28),(0xFFFFFFFF<<(32-(32-28))),shamode>(); break;
-			case 29: mineloop<(1<<29),(0xFFFFFFFF<<(32-(32-29))),shamode>(); break;
-			case 30: mineloop<(1<<30),(0xFFFFFFFF<<(32-(32-30))),shamode>(); break;
+			case 20: mineloop<(1<<20),(0xFFFFFFFF<<(20-kk)),shamode>(); break;
+			case 21: mineloop<(1<<21),(0xFFFFFFFF<<(21-kk)),shamode>(); break;
+			case 22: mineloop<(1<<22),(0xFFFFFFFF<<(22-kk)),shamode>(); break;
+			case 23: mineloop<(1<<23),(0xFFFFFFFF<<(23-kk)),shamode>(); break;
+			case 24: mineloop<(1<<24),(0xFFFFFFFF<<(24-kk)),shamode>(); break;
+			case 25: mineloop<(1<<25),(0xFFFFFFFF<<(25-kk)),shamode>(); break;
+			case 26: mineloop<(1<<26),(0xFFFFFFFF<<(26-kk)),shamode>(); break;
+			case 27: mineloop<(1<<27),(0xFFFFFFFF<<(27-kk)),shamode>(); break;
+			case 28: mineloop<(1<<28),(0xFFFFFFFF<<(28-kk)),shamode>(); break;
+			case 29: mineloop<(1<<29),(0xFFFFFFFF<<(29-kk)),shamode>(); break;
+			case 30: mineloop<(1<<30),(0xFFFFFFFF<<(30-kk)),shamode>(); break;
 			default: break;
 		}
+#undef kk
 	}
 
 	void run() {
 		std::cout << "[WORKER" << _id << "] Hello, World!" << std::endl;
 		{
 			//set low priority
-#if defined(__GNUG__) && !defined(__MINGW32__) && !defined(__MINGW64__)
+#if defined(__GNUG__) && !defined(__MINGW32__) && !defined(__MINGW64__) && !defined(__CYGWIN__)
 			pid_t tid = (pid_t) syscall (SYS_gettid);
 			setpriority(PRIO_PROCESS, tid, 1);
 #elif defined(__MINGW32__) || defined(__MINGW64__)
@@ -234,8 +238,8 @@ public:
 
     boost::asio::io_service io_service;
     boost::asio::ip::tcp::resolver resolver(io_service); //resolve dns
-	boost::asio::ip::tcp::resolver::query query("ptsmine.beeeeer.org", "1337");
-	//boost::asio::ip::tcp::resolver::query query("127.0.0.1", "1337");
+	//boost::asio::ip::tcp::resolver::query query("ptsmine.beeeeer.org", "1337");
+	boost::asio::ip::tcp::resolver::query query(pool_address, pool_port);
     boost::asio::ip::tcp::resolver::iterator endpoint;
 	boost::asio::ip::tcp::resolver::iterator end;
 	boost::asio::ip::tcp::no_delay nd_option(true);
@@ -493,6 +497,25 @@ void ctrl_handler(int signum) {
 
 #endif
 
+// get args
+char * getArgStr(int argc, char **argv, const char* name, char * def) {
+	for(int i = 0; i < argc-1; i++) {
+		if (!strcmp(name, argv[i])) {
+			return argv[i+1];
+		}
+	}
+	return def;
+}
+
+int getArgInt(int argc, char **argv, const char* name, int def) {
+	for(int i = 0; i < argc-1; i++) {
+		if (!strcmp(name, argv[i])) {
+			return atoi(argv[i+1]);
+		}
+	}
+	return def;
+}
+
 void print_help(const char* _exec) {
 	std::cerr << "usage: " << _exec << " <payout-address> <threads-to-use> [memory-option] [mode]" << std::endl;
 	std::cerr << std::endl;
@@ -526,37 +549,48 @@ int main(int argc, char **argv)
 	std::cout << "********************************************" << std::endl;
 	std::cout << "*** ptsminer - Pts Pool Miner v" << VERSION_MAJOR << "." << VERSION_MINOR << " " << VERSION_EXT << std::endl;
 	std::cout << "*** by xolokram/TB - www.beeeeer.org - glhf" << std::endl;
+	std::cout << "*** " << std::endl;
+	std::cout << "*** performance improvements by girino " << std::endl;
+	std::cout << "***    if you like, donate:  " << std::endl;
+	std::cout << "***    PTS: PkyeQNn1yGV5psGeZ4sDu6nz2vWHTujf4h  " << std::endl;
+	std::cout << "***    BTC: 1GiRiNoKznfGbt8bkU1Ley85TgVV7ZTXce  " << std::endl;
 	//std::cout << "*** thanks to jh00, testix & Co." << std::endl; //...for no transactions in the network? pff!
 	std::cout << "***" << std::endl;
 	std::cout << "*** press CTRL+C to exit" << std::endl;
 	std::cout << "********************************************" << std::endl;
 	
-	if (argc < 3 || argc > 5)
+	// init everything:
+	socket_to_server = NULL;
+	thread_num_max = getArgInt(argc, argv, "-t", 1); // what about boost's hardware_concurrency() ?
+	COLLISION_TABLE_BITS = getArgInt(argc, argv, "-m", 27);
+	fee_to_pay = 0; //GetArg("-poolfee", 3);
+	miner_id = 0; //GetArg("-minerid", 0);
+	pool_username = getArgStr(argc, argv, "-u", "");
+	pool_password = getArgStr(argc, argv, "-p", "x");
+	pool_address = getArgStr(argc, argv, "-o", "ptsmine.beeeeer.org");
+	pool_port = getArgStr(argc, argv, "-port", "1337");
+	std::string mode_param = getArgStr(argc, argv, "-a", "auto");
+
+	if (pool_username == "")
 	{
 		print_help(argv[0]);
 		return EXIT_FAILURE;
 	}
 
 	use_avxsse4 = false;
-	if (argc == 5) {
-		std::string mode_param(argv[4]);
-		if (mode_param == "avx") {
-			Init_SHA512_avx();
-			use_avxsse4 = true;
-			std::cout << "using AVX" << std::endl;
-		} else if (mode_param == "sse4") {
-			Init_SHA512_sse4();
-			use_avxsse4 = true;
-			std::cout << "using SSE4" << std::endl;
-		} else if (mode_param == "sph") {
-			std::cout << "using SPHLIB" << std::endl;
-		} else {
-			std::cout << "invalid mode" << std::endl << std::endl;
-			print_help(argv[0]);
-			return EXIT_FAILURE;
-		}
+	if (mode_param == "avx") {
+		Init_SHA512_avx();
+		use_avxsse4 = true;
+		std::cout << "using AVX" << std::endl;
+	} else if (mode_param == "sse4") {
+		Init_SHA512_sse4();
+		use_avxsse4 = true;
+		std::cout << "using SSE4" << std::endl;
+	} else if (mode_param == "sph") {
+		std::cout << "using SPHLIB" << std::endl;
 	} else {
 #ifdef	__x86_64__
+		std::cout << "**" << "SSE4/AVX auto-detection" << std::endl;
 		processor_info_t proc_info;
 		cpuid_basic_identify(&proc_info);
 		if (proc_info.proc_type == PROC_X64_INTEL || proc_info.proc_type == PROC_X64_AMD) {
@@ -596,18 +630,6 @@ int main(int argc, char **argv)
 	if (atexit_res != 0)
 		std::cerr << "atexit registration failed, shutdown will be dirty!" << std::endl;
 
-	// init everything:
-	socket_to_server = NULL;
-	thread_num_max = atoi(argv[2]); //GetArg("-genproclimit", 1); // what about boost's hardware_concurrency() ?
-	if (argc == 4 || argc == 5)
-		COLLISION_TABLE_BITS = atoi(argv[3]);
-	else
-		COLLISION_TABLE_BITS = 27;
-	fee_to_pay = 0; //GetArg("-poolfee", 3);
-	miner_id = 0; //GetArg("-minerid", 0);
-	pool_username = argv[1]; //GetArg("-pooluser", "");
-	pool_password = "blabla"; //GetArg("-poolpassword", "");
-	
 	if (COLLISION_TABLE_BITS < 20 || COLLISION_TABLE_BITS > 30)
 	{
 		std::cerr << "unsupported memory option, choose a value between 20 and 31" << std::endl;
