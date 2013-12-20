@@ -134,19 +134,52 @@ public:
   virtual boost::shared_mutex& get_working_lock() = 0;
 };
 
+
+void sha512_sseavx(unsigned char* in, unsigned int size, unsigned char* out) {
+	//AVX/SSE
+	SHA512_Context c512_avxsse; //AVX/SSE
+	SHA512_Init(&c512_avxsse);
+	SHA512_Update(&c512_avxsse, in, size);
+	SHA512_Final(&c512_avxsse, (unsigned char*)out);
+}
+
+void sha512_sph(unsigned char* in, unsigned int size, unsigned char* out) {
+	//SPH
+	sph_sha512_context c512_sph; //SPH
+	sph_sha512_init(&c512_sph);
+	sph_sha512(&c512_sph, in, size);
+	sph_sha512_close(&c512_sph, out);
+}
+
 class CWorkerThread { // worker=miner
 public:
 
 	CWorkerThread(CMasterThreadStub *master, unsigned int id, CBlockProviderGW *bprovider)
 		: _collisionMap(NULL), _working_lock(NULL), _id(id), _master(master), _bprovider(bprovider), _thread(&CWorkerThread::run, this) {
 			_collisionMap = (uint32_t*)malloc(sizeof(uint32_t)*(1 << COLLISION_TABLE_BITS));
+
+			mintime = 0x3fffffff;
+			totaltime = 0;
+			num_runs = 0;
 		}
-		
-	template<int COLLISION_TABLE_SIZE, int COLLISION_KEY_MASK, SHAMODE shamode>
+
+	unsigned int mintime;
+	unsigned int totaltime;
+	unsigned int num_runs;
+
+	template<int COLLISION_TABLE_SIZE, SHAMODE shamode>
 	void mineloop() {
 		unsigned int blockcnt = 0;
 		blockHeader_t* thrblock = NULL;
 		blockHeader_t* orgblock = NULL;
+		void (*sha512_func)(unsigned char* in, unsigned int size, unsigned char* out);
+
+		if (shamode == AVXSSE4) {
+			sha512_func = &sha512_sseavx;
+		} else {
+			sha512_func = &sha512_sph;
+		}
+
 		while (running) {
 			if (orgblock != _bprovider->getOriginalBlock()) {
 				orgblock = _bprovider->getOriginalBlock();
@@ -157,7 +190,24 @@ public:
 				++blockcnt;
 			}
 			if (thrblock != NULL) {
-				protoshares_process_512<COLLISION_TABLE_SIZE,COLLISION_KEY_MASK,shamode>(thrblock, _collisionMap, _bprovider, _id);
+			    struct timeval tv;
+			    gettimeofday(&tv, NULL);
+
+				protoshares_process<COLLISION_TABLE_SIZE>(thrblock, _collisionMap, _bprovider, sha512_func, _id);
+
+			    unsigned int begin_time = (tv.tv_sec * 1000 + tv.tv_usec / 1000);
+			    gettimeofday(&tv, NULL);
+			    unsigned int end_time = (tv.tv_sec * 1000 + tv.tv_usec / 1000);
+			    unsigned int elapsed_time = end_time-begin_time;
+			    if (mintime > elapsed_time) {
+			    	mintime = elapsed_time;
+			    }
+			    totaltime += elapsed_time;
+			    num_runs++;
+			    double average_time = ((double)totaltime)/((double)num_runs);
+				std::cout << "Time Elapsed thread " << _id << ": "
+						<< elapsed_time << " (min: " << mintime << " avg: "
+						<< average_time <<")" << std::endl;
 			} else
 				boost::this_thread::sleep(boost::posix_time::seconds(1));
 		}
@@ -165,24 +215,22 @@ public:
 	
 	template<SHAMODE shamode>
 	void mineloop_start() {
-#define kk 3
 		// collision key mask should always be 9 bits since i need
 		// 23 for the search space (2^27-1 in steps of 8 -> 26 bits - 3 bits = 23 bits)
 		switch (COLLISION_TABLE_BITS) {
-			case 20: mineloop<(1<<20),(0xFFFFFFFF<<23),shamode>(); break;
-			case 21: mineloop<(1<<21),(0xFFFFFFFF<<23),shamode>(); break;
-			case 22: mineloop<(1<<22),(0xFFFFFFFF<<23),shamode>(); break;
-			case 23: mineloop<(1<<23),(0xFFFFFFFF<<23),shamode>(); break;
-			case 24: mineloop<(1<<24),(0xFFFFFFFF<<23),shamode>(); break;
-			case 25: mineloop<(1<<25),(0xFFFFFFFF<<23),shamode>(); break;
-			case 26: mineloop<(1<<26),(0xFFFFFFFF<<23),shamode>(); break;
-			case 27: mineloop<(1<<27),(0xFFFFFFFF<<23),shamode>(); break;
-			case 28: mineloop<(1<<28),(0xFFFFFFFF<<23),shamode>(); break;
-			case 29: mineloop<(1<<29),(0xFFFFFFFF<<23),shamode>(); break;
-			case 30: mineloop<(1<<30),(0xFFFFFFFF<<23),shamode>(); break;
+			case 20: mineloop<(1<<20),shamode>(); break;
+			case 21: mineloop<(1<<21),shamode>(); break;
+			case 22: mineloop<(1<<22),shamode>(); break;
+			case 23: mineloop<(1<<23),shamode>(); break;
+			case 24: mineloop<(1<<24),shamode>(); break;
+			case 25: mineloop<(1<<25),shamode>(); break;
+			case 26: mineloop<(1<<26),shamode>(); break;
+			case 27: mineloop<(1<<27),shamode>(); break;
+			case 28: mineloop<(1<<28),shamode>(); break;
+			case 29: mineloop<(1<<29),shamode>(); break;
+			case 30: mineloop<(1<<30),shamode>(); break;
 			default: break;
 		}
-#undef kk
 	}
 
 	void run() {
@@ -191,7 +239,7 @@ public:
 			//set low priority
 #if defined(__GNUG__) && !defined(__MINGW32__) && !defined(__MINGW64__) && !defined(__CYGWIN__)
 			pid_t tid = (pid_t) syscall (SYS_gettid);
-			setpriority(PRIO_PROCESS, tid, 1);
+			setpriority(PRIO_PROCESS, tid, -1);
 #elif defined(__MINGW32__) || defined(__MINGW64__)
 			HANDLE th = _thread.native_handle();
 			if (!SetThreadPriority(th, THREAD_PRIORITY_LOWEST))
@@ -500,18 +548,18 @@ void ctrl_handler(int signum) {
 #endif
 
 // get args
-char * getArgStr(int argc, char **argv, const char* name, char * def) {
+std::string getArgStr(int argc, char **argv, std::string name, std::string def) {
 	for(int i = 0; i < argc-1; i++) {
-		if (!strcmp(name, argv[i])) {
-			return argv[i+1];
+		if (name == std::string(argv[i])) {
+			return std::string(argv[i+1]);
 		}
 	}
 	return def;
 }
 
-int getArgInt(int argc, char **argv, const char* name, int def) {
+int getArgInt(int argc, char **argv, std::string name, int def) {
 	for(int i = 0; i < argc-1; i++) {
-		if (!strcmp(name, argv[i])) {
+		if (name == std::string(argv[i])) {
 			return atoi(argv[i+1]);
 		}
 	}
