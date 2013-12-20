@@ -56,7 +56,7 @@ void print256(const char* bfstr, uint32_t* v) {
 }
 
 template<SHAMODE shamode>
-bool protoshares_revalidateCollision(blockHeader_t* block, uint8_t* midHash, uint32_t indexA_orig, uint32_t indexB, CBlockProvider* bp, unsigned int thread_id)
+bool protoshares_revalidateCollision(blockHeader_t* block, uint8_t* midHash, uint32_t indexA_orig, uint32_t indexB, uint64_t birthdayB, CBlockProvider* bp, unsigned int thread_id)
 {
         //if( indexA > MAX_MOMENTUM_NONCE )
         //        printf("indexA out of range\n");
@@ -67,16 +67,16 @@ bool protoshares_revalidateCollision(blockHeader_t* block, uint8_t* midHash, uin
         uint8_t tempHash[32+4];
         uint64_t resultHash[8];
         memcpy(tempHash+4, midHash, 32);
-		uint64_t birthdayA, birthdayB;
+		uint64_t birthdayA;//, birthdayB;
 		if (shamode == AVXSSE4) {
 			//AVX/SSE
 			SHA512_Context c512_avxsse;
 			// get birthday B
-			*(uint32_t*)tempHash = indexB&~7;
-			SHA512_Init(&c512_avxsse);
-			SHA512_Update(&c512_avxsse, tempHash, 32+4);
-			SHA512_Final(&c512_avxsse, (unsigned char*)resultHash);
-			birthdayB = resultHash[ptrdiff_t(indexB&7)] >> (64ULL-SEARCH_SPACE_BITS);
+//			*(uint32_t*)tempHash = indexB&~7;
+//			SHA512_Init(&c512_avxsse);
+//			SHA512_Update(&c512_avxsse, tempHash, 32+4);
+//			SHA512_Final(&c512_avxsse, (unsigned char*)resultHash);
+//			birthdayB = resultHash[ptrdiff_t(indexB&7)] >> (64ULL-SEARCH_SPACE_BITS);
 			// get birthday A
 			*(uint32_t*)tempHash = indexA_orig&~7;
 			SHA512_Init(&c512_avxsse);
@@ -86,11 +86,11 @@ bool protoshares_revalidateCollision(blockHeader_t* block, uint8_t* midHash, uin
 			//SPH
 			sph_sha512_context c512_sph;
 			// get birthday B
-			*(uint32_t*)tempHash = indexB&~7;
-			sph_sha512_init(&c512_sph);
-			sph_sha512(&c512_sph, tempHash, 32+4);
-			sph_sha512_close(&c512_sph, (unsigned char*)resultHash);
-			birthdayB = resultHash[ptrdiff_t(indexB&7)] >> (64ULL-SEARCH_SPACE_BITS);
+//			*(uint32_t*)tempHash = indexB&~7;
+//			sph_sha512_init(&c512_sph);
+//			sph_sha512(&c512_sph, tempHash, 32+4);
+//			sph_sha512_close(&c512_sph, (unsigned char*)resultHash);
+//			birthdayB = resultHash[ptrdiff_t(indexB&7)] >> (64ULL-SEARCH_SPACE_BITS);
 			// get birthday A
 			*(uint32_t*)tempHash = indexA_orig&~7;
 			sph_sha512_init(&c512_sph);
@@ -229,13 +229,13 @@ void protoshares_process_512(blockHeader_t* block, uint32_t* collisionIndices, C
                         uint32_t i = n + m*8;
                         for(uint32_t f=0; f<8; f++)
                         {
-                                uint64_t birthday = resultHash[f] >> (64ULL-SEARCH_SPACE_BITS);
-                                uint32_t collisionKey = (uint32_t)((birthday>>18) & COLLISION_KEY_MASK);
-                                birthday %= COLLISION_TABLE_SIZE;
+                                uint64_t birthdayB = resultHash[f] >> (64ULL-SEARCH_SPACE_BITS);
+                                uint32_t collisionKey = (uint32_t)((birthdayB>>18) & COLLISION_KEY_MASK);
+                                uint64_t birthday = birthdayB % COLLISION_TABLE_SIZE;
                                 if( ((collisionIndices[birthday]&COLLISION_KEY_MASK) == collisionKey)) {
                             		// try to avoid submitting bad shares
                             		if (ob != bp->getOriginalBlock()) return;
-                               		protoshares_revalidateCollision<shamode>(block, midHash, (collisionIndices[birthday]&~COLLISION_KEY_MASK)*8, i+f, bp, thread_id);
+                               		protoshares_revalidateCollision<shamode>(block, midHash, (collisionIndices[birthday]&~COLLISION_KEY_MASK)*8, i+f, birthdayB, bp, thread_id);
                                         // invalid collision -> ignore or mark this entry as invalid?
                                 }
                                 collisionIndices[birthday] = (i/8) | collisionKey; // we have 6 bits available for validation

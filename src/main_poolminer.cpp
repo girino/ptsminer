@@ -165,19 +165,21 @@ public:
 	
 	template<SHAMODE shamode>
 	void mineloop_start() {
-#define kk 4
+#define kk 3
+		// collision key mask should always be 9 bits since i need
+		// 23 for the search space (2^27-1 in steps of 8 -> 26 bits - 3 bits = 23 bits)
 		switch (COLLISION_TABLE_BITS) {
-			case 20: mineloop<(1<<20),(0xFFFFFFFF<<(20-kk)),shamode>(); break;
-			case 21: mineloop<(1<<21),(0xFFFFFFFF<<(21-kk)),shamode>(); break;
-			case 22: mineloop<(1<<22),(0xFFFFFFFF<<(22-kk)),shamode>(); break;
-			case 23: mineloop<(1<<23),(0xFFFFFFFF<<(23-kk)),shamode>(); break;
-			case 24: mineloop<(1<<24),(0xFFFFFFFF<<(24-kk)),shamode>(); break;
-			case 25: mineloop<(1<<25),(0xFFFFFFFF<<(25-kk)),shamode>(); break;
-			case 26: mineloop<(1<<26),(0xFFFFFFFF<<(26-kk)),shamode>(); break;
-			case 27: mineloop<(1<<27),(0xFFFFFFFF<<(27-kk)),shamode>(); break;
-			case 28: mineloop<(1<<28),(0xFFFFFFFF<<(28-kk)),shamode>(); break;
-			case 29: mineloop<(1<<29),(0xFFFFFFFF<<(29-kk)),shamode>(); break;
-			case 30: mineloop<(1<<30),(0xFFFFFFFF<<(30-kk)),shamode>(); break;
+			case 20: mineloop<(1<<20),(0xFFFFFFFF<<23),shamode>(); break;
+			case 21: mineloop<(1<<21),(0xFFFFFFFF<<23),shamode>(); break;
+			case 22: mineloop<(1<<22),(0xFFFFFFFF<<23),shamode>(); break;
+			case 23: mineloop<(1<<23),(0xFFFFFFFF<<23),shamode>(); break;
+			case 24: mineloop<(1<<24),(0xFFFFFFFF<<23),shamode>(); break;
+			case 25: mineloop<(1<<25),(0xFFFFFFFF<<23),shamode>(); break;
+			case 26: mineloop<(1<<26),(0xFFFFFFFF<<23),shamode>(); break;
+			case 27: mineloop<(1<<27),(0xFFFFFFFF<<23),shamode>(); break;
+			case 28: mineloop<(1<<28),(0xFFFFFFFF<<23),shamode>(); break;
+			case 29: mineloop<(1<<29),(0xFFFFFFFF<<23),shamode>(); break;
+			case 30: mineloop<(1<<30),(0xFFFFFFFF<<23),shamode>(); break;
 			default: break;
 		}
 #undef kk
