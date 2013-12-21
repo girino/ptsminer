@@ -145,7 +145,7 @@ void _protoshares_process_V2(blockHeader_t* block,  CBlockProvider* bp,
 				{
 						uint64_t birthdayB = resultHash[f] >> (64ULL-SEARCH_SPACE_BITS);
 						uint32_t collisionKey = (uint32_t)((birthdayB>>18) & COLLISION_KEY_MASK);
-						uint64_t birthday = birthdayB % COLLISION_TABLE_SIZE;
+						uint64_t birthday = birthdayB & (COLLISION_TABLE_SIZE-1);
 						if( ((collisionIndices[birthday]&COLLISION_KEY_MASK) == collisionKey)) {
 							// try to avoid submitting bad shares
 							if (ob != bp->getOriginalBlock()) return;
@@ -199,7 +199,7 @@ void _protoshares_process_V1(blockHeader_t* block,  CBlockProvider* bp,
                                 uint64_t birthdayB = resultHash[f] >> (64ULL-SEARCH_SPACE_BITS);
                                 uint32_t collisionKey = (uint32_t)((birthdayB>>18) & COLLISION_KEY_MASK);
                                 //uint64_t birthday = birthdayB % collisionTableSize;
-                                uint64_t birthday = birthdayB % COLLISION_TABLE_SIZE;
+                                uint64_t birthday = birthdayB & (COLLISION_TABLE_SIZE-1);
                                 if( ((collisionIndices[birthday]&COLLISION_KEY_MASK) == collisionKey)) {
                             		// try to avoid submitting bad shares
                             		if (ob != bp->getOriginalBlock()) return;
@@ -246,21 +246,104 @@ void _protoshares_process_V3(blockHeader_t* block,  CBlockProvider* bp,
         {
         		*(uint32_t*)tempHash = n;
                 SHA512_FUNC(tempHash, 32+4, (unsigned char*)resultHash);
-                uint32_t f=0;
-                repeat8(
-						uint64_t birthdayB = resultHash[f] >> (64ULL-SEARCH_SPACE_BITS);
-						uint32_t collisionKey = (uint32_t)((birthdayB>>18) & COLLISION_KEY_MASK);
-						uint64_t birthday = birthdayB % COLLISION_TABLE_SIZE;
-						if( ((collisionIndices[birthday]&COLLISION_KEY_MASK) == collisionKey)) {
-							// try to avoid submitting bad shares
-							if (ob != bp->getOriginalBlock()) return;
-							protoshares_revalidateCollision(block, midHash, (collisionIndices[birthday]&~COLLISION_KEY_MASK)*8, n+f, birthdayB, bp, SHA512_FUNC, thread_id);
-							// invalid collision -> ignore or mark this entry as invalid?
-						} else {
-							collisionIndices[birthday] = (n/8) | collisionKey; // we have 6 bits available for validation
-						}
-						f++;
-				)
+
+                uint64_t birthdayB = resultHash[0] >> (64ULL-SEARCH_SPACE_BITS);
+				uint32_t collisionKey = (uint32_t)((birthdayB>>18) & COLLISION_KEY_MASK);
+				uint64_t birthday = birthdayB & (COLLISION_TABLE_SIZE-1);
+				if( ((collisionIndices[birthday]&COLLISION_KEY_MASK) == collisionKey)) {
+					// try to avoid submitting bad shares
+					if (ob != bp->getOriginalBlock()) return;
+					protoshares_revalidateCollision(block, midHash, (collisionIndices[birthday]&~COLLISION_KEY_MASK)<<3, n+0, birthdayB, bp, SHA512_FUNC, thread_id);
+					// invalid collision -> ignore or mark this entry as invalid?
+				} else {
+					collisionIndices[birthday] = (n>>3) | collisionKey; // we have 6 bits available for validation
+				}
+
+                birthdayB = resultHash[1] >> (64ULL-SEARCH_SPACE_BITS);
+				collisionKey = (uint32_t)((birthdayB>>18) & COLLISION_KEY_MASK);
+				birthday = birthdayB & (COLLISION_TABLE_SIZE-1);
+				if( ((collisionIndices[birthday]&COLLISION_KEY_MASK) == collisionKey)) {
+					// try to avoid submitting bad shares
+					if (ob != bp->getOriginalBlock()) return;
+					protoshares_revalidateCollision(block, midHash, (collisionIndices[birthday]&~COLLISION_KEY_MASK)<<3, n+1, birthdayB, bp, SHA512_FUNC, thread_id);
+					// invalid collision -> ignore or mark this entry as invalid?
+				} else {
+					collisionIndices[birthday] = (n>>3) | collisionKey; // we have 6 bits available for validation
+				}
+
+
+                birthdayB = resultHash[2] >> (64ULL-SEARCH_SPACE_BITS);
+				collisionKey = (uint32_t)((birthdayB>>18) & COLLISION_KEY_MASK);
+				birthday = birthdayB & (COLLISION_TABLE_SIZE-1);
+				if( ((collisionIndices[birthday]&COLLISION_KEY_MASK) == collisionKey)) {
+					// try to avoid submitting bad shares
+					if (ob != bp->getOriginalBlock()) return;
+					protoshares_revalidateCollision(block, midHash, (collisionIndices[birthday]&~COLLISION_KEY_MASK)<<3, n+2, birthdayB, bp, SHA512_FUNC, thread_id);
+					// invalid collision -> ignore or mark this entry as invalid?
+				} else {
+					collisionIndices[birthday] = (n>>3) | collisionKey; // we have 6 bits available for validation
+				}
+
+                birthdayB = resultHash[3] >> (64ULL-SEARCH_SPACE_BITS);
+				collisionKey = (uint32_t)((birthdayB>>18) & COLLISION_KEY_MASK);
+				birthday = birthdayB & (COLLISION_TABLE_SIZE-1);
+				if( ((collisionIndices[birthday]&COLLISION_KEY_MASK) == collisionKey)) {
+					// try to avoid submitting bad shares
+					if (ob != bp->getOriginalBlock()) return;
+					protoshares_revalidateCollision(block, midHash, (collisionIndices[birthday]&~COLLISION_KEY_MASK)<<3, n+3, birthdayB, bp, SHA512_FUNC, thread_id);
+					// invalid collision -> ignore or mark this entry as invalid?
+				} else {
+					collisionIndices[birthday] = (n>>3) | collisionKey; // we have 6 bits available for validation
+				}
+
+                birthdayB = resultHash[4] >> (64ULL-SEARCH_SPACE_BITS);
+				collisionKey = (uint32_t)((birthdayB>>18) & COLLISION_KEY_MASK);
+				birthday = birthdayB & (COLLISION_TABLE_SIZE-1);
+				if( ((collisionIndices[birthday]&COLLISION_KEY_MASK) == collisionKey)) {
+					// try to avoid submitting bad shares
+					if (ob != bp->getOriginalBlock()) return;
+					protoshares_revalidateCollision(block, midHash, (collisionIndices[birthday]&~COLLISION_KEY_MASK)<<3, n+4, birthdayB, bp, SHA512_FUNC, thread_id);
+					// invalid collision -> ignore or mark this entry as invalid?
+				} else {
+					collisionIndices[birthday] = (n>>3) | collisionKey; // we have 6 bits available for validation
+				}
+
+                birthdayB = resultHash[5] >> (64ULL-SEARCH_SPACE_BITS);
+				collisionKey = (uint32_t)((birthdayB>>18) & COLLISION_KEY_MASK);
+				birthday = birthdayB & (COLLISION_TABLE_SIZE-1);
+				if( ((collisionIndices[birthday]&COLLISION_KEY_MASK) == collisionKey)) {
+					// try to avoid submitting bad shares
+					if (ob != bp->getOriginalBlock()) return;
+					protoshares_revalidateCollision(block, midHash, (collisionIndices[birthday]&~COLLISION_KEY_MASK)<<3, n+5, birthdayB, bp, SHA512_FUNC, thread_id);
+					// invalid collision -> ignore or mark this entry as invalid?
+				} else {
+					collisionIndices[birthday] = (n>>3) | collisionKey; // we have 6 bits available for validation
+				}
+
+                birthdayB = resultHash[6] >> (64ULL-SEARCH_SPACE_BITS);
+				collisionKey = (uint32_t)((birthdayB>>18) & COLLISION_KEY_MASK);
+				birthday = birthdayB & (COLLISION_TABLE_SIZE-1);
+				if( ((collisionIndices[birthday]&COLLISION_KEY_MASK) == collisionKey)) {
+					// try to avoid submitting bad shares
+					if (ob != bp->getOriginalBlock()) return;
+					protoshares_revalidateCollision(block, midHash, (collisionIndices[birthday]&~COLLISION_KEY_MASK)<<3, n+6, birthdayB, bp, SHA512_FUNC, thread_id);
+					// invalid collision -> ignore or mark this entry as invalid?
+				} else {
+					collisionIndices[birthday] = (n>>3) | collisionKey; // we have 6 bits available for validation
+				}
+
+                birthdayB = resultHash[7] >> (64ULL-SEARCH_SPACE_BITS);
+				collisionKey = (uint32_t)((birthdayB>>18) & COLLISION_KEY_MASK);
+				birthday = birthdayB & (COLLISION_TABLE_SIZE-1);
+				if( ((collisionIndices[birthday]&COLLISION_KEY_MASK) == collisionKey)) {
+					// try to avoid submitting bad shares
+					if (ob != bp->getOriginalBlock()) return;
+					protoshares_revalidateCollision(block, midHash, (collisionIndices[birthday]&~COLLISION_KEY_MASK)<<3, n+7, birthdayB, bp, SHA512_FUNC, thread_id);
+					// invalid collision -> ignore or mark this entry as invalid?
+				} else {
+					collisionIndices[birthday] = (n>>3) | collisionKey; // we have 6 bits available for validation
+				}
+
         }
 }
 
