@@ -62,6 +62,7 @@ OBJS= \
 	obj/sha512.o \
 	obj/sph_sha2.o \
 	obj/sph_sha2big.o \
+	obj/CProtoshareProcessor.o \
 	obj/main_poolminer.o
 
 all: ptsminer
