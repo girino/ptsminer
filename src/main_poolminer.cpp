@@ -10,7 +10,7 @@
 #include <csignal>
 #include <map>
 
-#include "main_poolminer.hpp"
+#include "main_poolminer.h"
 #include "CProtoshareProcessor.h"
 
 #if defined(__GNUG__) && !defined(__MINGW32__) && !defined(__MINGW64__) &&!defined(__CYGWIN__)

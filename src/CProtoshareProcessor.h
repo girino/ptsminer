@@ -7,7 +7,7 @@
 
 #ifndef CPROTOSHAREPOOCESSOR_H_
 #define CPROTOSHAREPOOCESSOR_H_
-#include "main_poolminer.hpp"
+#include "main_poolminer.h"
 
 typedef void (*sha512_func_t)(unsigned char*, unsigned int, unsigned char*);
 
