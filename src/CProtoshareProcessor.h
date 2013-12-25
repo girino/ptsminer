@@ -22,7 +22,7 @@ public:
 	virtual ~CProtoshareProcessor();
 	virtual void protoshares_process(blockHeader_t* block,  CBlockProvider* bp);
 
-	uint32_t* collisionIndices;
+	uint32_t *collisionIndices;
 	unsigned int collisionTableBits;
 	unsigned int thread_id;
 	SHAMODE shamode;
