@@ -197,9 +197,11 @@ public:
 			    totaltime += elapsed_time;
 			    num_runs++;
 			    double average_time = ((double)totaltime)/((double)num_runs);
+#ifdef DEBUG
 				std::cout << "Time Elapsed thread " << _id << ": "
 						<< elapsed_time << " (min: " << mintime << " avg: "
 						<< average_time <<")" << std::endl;
+#endif
 			} else
 				boost::this_thread::sleep(boost::posix_time::seconds(1));
 		}
