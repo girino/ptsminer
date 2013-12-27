@@ -112,7 +112,7 @@ static const uint64_t iv256[SHA512_HASH_WORDS] = {
   0x0eb72ddc81c52ca2LL
 };
 
-update_func_ptr sha512_update_func;
+update_func_ptr sha512_update_func = NULL;
 
 void
 Init_SHA512_avx ()

@@ -269,10 +269,12 @@ void _protoshares_process_V3(blockHeader_t* block,  CBlockProvider* bp,
         for(uint32_t n=0; n<MAX_MOMENTUM_NONCE; n += BIRTHDAYS_PER_HASH)
         {
         		*(uint32_t*)tempHash = n;
-                memcpy(resultHash, sha512_h0, 64);
-                sha512_update_func((void *)tempHash, resultHash, 1);
-                swap512(resultHash);
-
+                if(sha512_update_func == NULL)  SHA512_FUNC(tempHash, 32+4, (unsigned char*)resultHash);
+                else {
+                    memcpy(resultHash, sha512_h0, 64);
+                    sha512_update_func((void *)tempHash, resultHash, 1);
+                    swap512(resultHash);
+                }
                 uint64_t birthdayB = resultHash[0] >> (64ULL-SEARCH_SPACE_BITS);
 				uint32_t collisionKey = (uint32_t)((birthdayB>>18) & COLLISION_KEY_MASK);
 				uint64_t birthday = birthdayB & (COLLISION_TABLE_SIZE-1);
