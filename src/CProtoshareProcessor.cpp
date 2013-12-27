@@ -131,7 +131,6 @@ void _protoshares_process_V2(blockHeader_t* block,  CBlockProvider* bp,
 			sph_sha256(&c256, (unsigned char*)midHash, 32);
 			sph_sha256_close(&c256, midHash);
 		}
-        memset(collisionIndices, 0x00, sizeof(uint32_t)*COLLISION_TABLE_SIZE);
         // start search
         uint8_t tempHash[32+4];
         uint64_t resultHash[8];
@@ -177,7 +176,6 @@ void _protoshares_process_V1(blockHeader_t* block,  CBlockProvider* bp,
 			sph_sha256(&c256, (unsigned char*)midHash, 32);
 			sph_sha256_close(&c256, midHash);
 		}
-        memset(collisionIndices, 0x00, sizeof(uint32_t)*COLLISION_TABLE_SIZE);
         // start search
         uint8_t tempHash[32+4];
         uint64_t resultHashStorage[8*CACHED_HASHES];
@@ -236,7 +234,6 @@ void _protoshares_process_V3(blockHeader_t* block,  CBlockProvider* bp,
 			sph_sha256(&c256, (unsigned char*)midHash, 32);
 			sph_sha256_close(&c256, midHash);
 		}
-        memset(collisionIndices, 0x00, sizeof(uint32_t)*COLLISION_TABLE_SIZE);
         // start search
         uint8_t tempHash[32+4];
         uint64_t resultHash[8];
@@ -366,7 +363,6 @@ void _protoshares_process_V4(blockHeader_t* block,  CBlockProvider* bp,
 			sph_sha256(&c256, (unsigned char*)midHash, 32);
 			sph_sha256_close(&c256, midHash);
 		}
-        memset(collisionIndices, 0x00, sizeof(uint32_t)*COLLISION_TABLE_SIZE);
         // start search
         uint8_t tempHash[32+4];
         uint64_t resultHash[8];
