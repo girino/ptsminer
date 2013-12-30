@@ -512,33 +512,43 @@ public:
 	CHashTableLinearCollision(uint32_t* _buffer) {
 		buffer = _buffer;
         memset(buffer, 0x00, sizeof(uint32_t)*COLLISION_TABLE_SIZE);
+#ifdef DEBUG
         num_checks = 0;
         num_retries = 0;
         for (int i = 0; i < COLLISION_RETRIES; i++) {
         	num_found[i] = 0;
         }
+#endif
 	}
 	~CHashTableLinearCollision() {
 		// do nothing for now;
 	}
-	uint32_t check(uint64_t birthdayB, uint32_t nonce) {
+	__inline uint32_t check(uint64_t birthdayB, uint32_t nonce) {
 		uint32_t collisionKey = (uint32_t)((birthdayB>>18) & COLLISION_KEY_MASK);
+#ifdef DEBUG
 		num_checks++;
+#endif
+#pragma unroll (4)
 		for(int i = 0; i < COLLISION_RETRIES; i++) {
 			uint64_t birthday = (birthdayB+i) % COLLISION_TABLE_SIZE;
 			if (!buffer[birthday]) {
 				buffer[birthday] = (nonce>>3) | collisionKey; // we have 6 bits available for validation
 				return 0;
 			} else if( (buffer[birthday]&COLLISION_KEY_MASK) == collisionKey ) {
+#ifdef DEBUG
 				num_found[i]++;
+#endif
 				return (buffer[birthday]&~COLLISION_KEY_MASK)<<3;
 			}
+#ifdef DEBUG
 			num_retries++;
+#endif
 		}
 		// not found after COLLISION_RETRIES
 		return 0;
 	}
 
+#ifdef DEBUG
 	uint32_t num_checks;
 	uint32_t num_retries;
 	uint32_t num_found[COLLISION_RETRIES];
@@ -552,6 +562,7 @@ public:
 		}
 		std::cout << "   Total found: " << total << std::endl;
 	}
+#endif
 private:
 	uint32_t* buffer;
 };
