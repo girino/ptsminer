@@ -276,6 +276,17 @@ _final (SHA512_Context *sc, uint8_t *hash, int hashWords, int halfWord)
 }
 
 void
+SHA512_Update_Special (SHA512_Context *sc, const void *vdata, size_t len)
+{
+	const uint8_t *data = (const uint8_t *)vdata;
+	sc->blocks = 0;
+	sc->totalLength[1] += len * 8L;
+
+	memcpy (sc->buffer.bytes, data, len);
+	sc->bufferLength = len;
+}
+
+void
 SHA512_Final (SHA512_Context *sc, uint8_t hash[SHA512_HASH_SIZE])
 {
 	_final (sc, hash, SHA512_HASH_WORDS, 0);

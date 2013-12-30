@@ -688,7 +688,7 @@ void sha512_func_avx(unsigned char* in, unsigned int size, unsigned char* out) {
 	//AVX/SSE
 	SHA512_Context c512_avxsse; //AVX/SSE
 	SHA512_Init(&c512_avxsse);
-	SHA512_Update(&c512_avxsse, in, size);
+	SHA512_Update_Special(&c512_avxsse, in, size);
 	SHA512_Final(&c512_avxsse, (unsigned char*)out);
 }
 
@@ -704,6 +704,26 @@ void sha512_func_fips(unsigned char* in, unsigned int size, unsigned char* out) 
 	sha512_ctx c512_yp; //SPH
 	sha512_init(&c512_yp);
 	sha512_update_final(&c512_yp, in, size, out);
+}
+
+
+void sha512_func_debug(unsigned char* in, unsigned int size, unsigned char* out) {
+
+	sha512_func_avx(in, size, out);
+
+    uint64_t resultHash[8];
+    uint64_t* resultHash2 = (uint64_t*)out;
+
+	sha512_ctx c512_yp; //SPH
+	sha512_init(&c512_yp);
+	sha512_update_final(&c512_yp, in, size, (unsigned char*)resultHash);
+
+	for (int i = 0; i < 8; i++ ) {
+
+		if (resultHash[i] != resultHash2[i]) {
+			printf("ERROR: %llX != %llX\n", resultHash[i], resultHash2[i]);
+		}
+	}
 }
 
 CProtoshareProcessor::CProtoshareProcessor(SHAMODE _shamode,

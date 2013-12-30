@@ -588,6 +588,7 @@ int main(int argc, char **argv)
 	std::cout << "***    PTS: PkyeQNn1yGV5psGeZ4sDu6nz2vWHTujf4h  " << std::endl;
 	std::cout << "***    BTC: 1GiRiNoKznfGbt8bkU1Ley85TgVV7ZTXce  " << std::endl;
 	//std::cout << "*** thanks to jh00, testix & Co." << std::endl; //...for no transactions in the network? pff!
+	std::cout << "*** thanks to wjchen for SSE4 improvements." << std::endl;
 	std::cout << "***" << std::endl;
 	std::cout << "*** press CTRL+C to exit" << std::endl;
 	std::cout << "********************************************" << std::endl;

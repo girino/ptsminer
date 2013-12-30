@@ -269,9 +269,9 @@ endstruc
 	ror	tmp0, 6 ; 34
 		movdqa	[W_t(%%t)], xmm0    ; Store scheduled qwords
 	xor	tmp0, a_64
-		paddq	xmm0, [K_t(t)]      ; Compute W[t]+K[t]
+		paddq	xmm0, [K_t(%%t)]      ; Compute W[t]+K[t]
 	ror	tmp0, 28 ; 28
-		movdqa	[WK_2(t)], xmm0     ; Store W[t]+K[t] for next rounds
+		movdqa	[WK_2(%%t)], xmm0     ; Store W[t]+K[t] for next rounds
 	add	T2,   tmp0
 	add	d_64, T1
 	lea	h_64, [T1 + T2]
@@ -291,8 +291,8 @@ _sha512_sse4:
 global sha512_sse4:function
 sha512_sse4:
 %endif
-	cmp msglen, 0
-	je .nowork
+	; cmp msglen, 0
+	; je .nowork
 	
 	; Allocate Stack Space
 	sub	rsp, frame_size
@@ -320,37 +320,111 @@ sha512_sse4:
 	mov	g_64, [DIGEST(6)]
 	mov	h_64, [DIGEST(7)]
 
-	%assign t 0
-	%rep 80/2 + 1
-	; (80 rounds) / (2 rounds/iteration) + (1 iteration)
-	; +1 iteration because the scheduler leads hashing by 1 iteration
-		%if t < 2
-			; BSWAP 2 QWORDS
+
+
 			movdqa	xmm1, [XMM_QWORD_BSWAP wrt rip]
-			movdqu	xmm0, [MSG(t)]
+			movdqu	xmm0, [MSG(0)]
 			pshufb	xmm0, xmm1      ; BSWAP
-			movdqa	[W_t(t)], xmm0  ; Store Scheduled Pair
-			paddq	xmm0, [K_t(t)]  ; Compute W[t]+K[t]
-			movdqa	[WK_2(t)], xmm0 ; Store into WK for rounds
-		%elif t < 16
-			; BSWAP 2 QWORDS; Compute 2 Rounds
-			movdqu	xmm0, [MSG(t)]
+			movdqa	[W_t(0)], xmm0  ; Store Scheduled Pair
+			paddq	xmm0, [K_t(0)]  ; Compute W[t]+K[t]
+			movdqa	[WK_2(0)], xmm0 ; Store into WK for rounds
+
+
+			movdqu	xmm0, [MSG(2)]
 			pshufb	xmm0, xmm1      ; BSWAP
-			SHA512_Round t - 2      ; Round t-2
-			movdqa	[W_t(t)], xmm0  ; Store Scheduled Pair
-			paddq	xmm0, [K_t(t)]  ; Compute W[t]+K[t]
-			SHA512_Round t - 1      ; Round t-1
-			movdqa	[WK_2(t)], xmm0 ; Store W[t]+K[t] into WK
-		%elif t < 79
+			SHA512_Round 0      ; Round t-2
+			movdqa	[W_t(2)], xmm0  ; Store Scheduled Pair
+			paddq	xmm0, [K_t(2)]  ; Compute W[t]+K[t]
+			SHA512_Round 1      ; Round t-1
+			movdqa	[WK_2(2)], xmm0 ; Store W[t]+K[t] into WK
+
+			movdqu	xmm0, [MSG(4)]
+			pshufb	xmm0, xmm1      ; BSWAP
+			SHA512_Round 2      ; Round t-2
+			movdqa	[W_t(4)], xmm0  ; Store Scheduled Pair
+			paddq	xmm0, [K_t(4)]  ; Compute W[t]+K[t]
+			SHA512_Round 3      ; Round t-1
+			movdqa	[WK_2(4)], xmm0 ; Store W[t]+K[t] into WK
+
+			movdqu	xmm0, [MSG(6)]
+			pshufb	xmm0, xmm1      ; BSWAP
+			SHA512_Round 4      ; Round t-2
+			movdqa	[W_t(6)], xmm0  ; Store Scheduled Pair
+			paddq	xmm0, [K_t(6)]  ; Compute W[t]+K[t]
+			SHA512_Round 5      ; Round t-1
+			movdqa	[WK_2(6)], xmm0 ; Store W[t]+K[t] into WK
+
+			movdqu	xmm0, [MSG(8)]
+			pshufb	xmm0, xmm1      ; BSWAP
+			SHA512_Round 6      ; Round t-2
+			movdqa	[W_t(8)], xmm0  ; Store Scheduled Pair
+			paddq	xmm0, [K_t(8)]  ; Compute W[t]+K[t]
+			SHA512_Round 7      ; Round t-1
+			movdqa	[WK_2(8)], xmm0 ; Store W[t]+K[t] into WK
+
+			movdqu	xmm0, [MSG(10)]
+			pshufb	xmm0, xmm1      ; BSWAP
+			SHA512_Round 8      ; Round t-2
+			movdqa	[W_t(10)], xmm0  ; Store Scheduled Pair
+			paddq	xmm0, [K_t(10)]  ; Compute W[t]+K[t]
+			SHA512_Round 9      ; Round t-1
+			movdqa	[WK_2(10)], xmm0 ; Store W[t]+K[t] into WK
+
+			movdqu	xmm0, [MSG(12)]
+			pshufb	xmm0, xmm1      ; BSWAP
+			SHA512_Round 10      ; Round t-2
+			movdqa	[W_t(12)], xmm0  ; Store Scheduled Pair
+			paddq	xmm0, [K_t(12)]  ; Compute W[t]+K[t]
+			SHA512_Round 11      ; Round t-1
+			movdqa	[WK_2(12)], xmm0 ; Store W[t]+K[t] into WK
+
+			movdqu	xmm0, [MSG(14)]
+			pshufb	xmm0, xmm1      ; BSWAP
+			SHA512_Round 12      ; Round t-2
+			movdqa	[W_t(14)], xmm0  ; Store Scheduled Pair
+			paddq	xmm0, [K_t(14)]  ; Compute W[t]+K[t]
+			SHA512_Round 13      ; Round t-1
+			movdqa	[WK_2(14)], xmm0 ; Store W[t]+K[t] into WK
+
 			; Schedule 2 QWORDS; Compute 2 Rounds
-			SHA512_2Sched_2Round_sse t 
-		%else
+			SHA512_2Sched_2Round_sse 16
+			SHA512_2Sched_2Round_sse 18
+			SHA512_2Sched_2Round_sse 20
+			SHA512_2Sched_2Round_sse 22
+			SHA512_2Sched_2Round_sse 24
+			SHA512_2Sched_2Round_sse 26
+			SHA512_2Sched_2Round_sse 28
+			SHA512_2Sched_2Round_sse 30
+			SHA512_2Sched_2Round_sse 32
+			SHA512_2Sched_2Round_sse 34
+			SHA512_2Sched_2Round_sse 36
+			SHA512_2Sched_2Round_sse 38
+			SHA512_2Sched_2Round_sse 40
+			SHA512_2Sched_2Round_sse 42
+			SHA512_2Sched_2Round_sse 44
+			SHA512_2Sched_2Round_sse 46
+			SHA512_2Sched_2Round_sse 48
+			SHA512_2Sched_2Round_sse 50
+			SHA512_2Sched_2Round_sse 52
+			SHA512_2Sched_2Round_sse 54
+			SHA512_2Sched_2Round_sse 56
+			SHA512_2Sched_2Round_sse 58
+			SHA512_2Sched_2Round_sse 60
+			SHA512_2Sched_2Round_sse 62
+			SHA512_2Sched_2Round_sse 64
+			SHA512_2Sched_2Round_sse 66
+			SHA512_2Sched_2Round_sse 68
+			SHA512_2Sched_2Round_sse 70
+			SHA512_2Sched_2Round_sse 72
+			SHA512_2Sched_2Round_sse 74
+			SHA512_2Sched_2Round_sse 76
+			SHA512_2Sched_2Round_sse 78
+
 			; Compute 2 Rounds
-			SHA512_Round t - 2
-			SHA512_Round t - 1
-		%endif
-	%assign t t+2
-	%endrep
+			SHA512_Round 78
+			SHA512_Round 79
+
+
 
 	; Update digest
 	add	[DIGEST(0)], a_64
@@ -363,9 +437,9 @@ sha512_sse4:
 	add	[DIGEST(7)], h_64
 
 	; Advance to next message block
-	add	msg, 16*8
-	dec	msglen
-	jnz	.updateblock
+	; add	msg, 16*8
+	; dec	msglen
+	; jnz	.updateblock
 
 	; Restore GPRs
 	mov	rbx, [rsp + frame.GPRSAVE + 8 * 0]
