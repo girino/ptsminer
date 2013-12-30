@@ -400,7 +400,7 @@ public:
 								statistics.insert(std::pair<int,unsigned long>(retval,1));
 							else
 								statistics[retval]++;
-							stats_running();
+							//stats_running();
 						}
 					} else
 						std::cout << "error on read2b: " << len << " should be " << buf_size << std::endl;
@@ -412,6 +412,7 @@ public:
 					//std::cout << "unknown header type = " << type << std::endl;
 				}
 			}
+			stats_running();
 		}
 
 		_bprovider->setBlockTo(NULL);

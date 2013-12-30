@@ -227,7 +227,6 @@ void _protoshares_process_V3(blockHeader_t* block,  CBlockProvider* bp,
         // generate mid hash using sha256 (header hash)
 		blockHeader_t* ob = bp->getOriginalBlock();
         uint8_t midHash[32];
-        uint32_t hashes_stored=0;
 
 		{
 			//SPH
@@ -481,6 +480,198 @@ void _protoshares_process_V4(blockHeader_t* block,  CBlockProvider* bp,
         }
 }
 
+// first, create new datastructure
+template<int COLLISION_TABLE_SIZE>
+class CHashTable {
+public:
+	CHashTable(uint32_t* _buffer) {
+		buffer = _buffer;
+        memset(buffer, 0x00, sizeof(uint32_t)*COLLISION_TABLE_SIZE);
+	}
+	~CHashTable() {
+		// do nothing for now;
+	}
+	uint32_t check(uint64_t birthdayB, uint32_t nonce) {
+		uint32_t collisionKey = (uint32_t)((birthdayB>>18) & COLLISION_KEY_MASK);
+		uint64_t birthday = birthdayB & (COLLISION_TABLE_SIZE-1);
+		if( ((buffer[birthday]&COLLISION_KEY_MASK) == collisionKey)) {
+			return (buffer[birthday]&~COLLISION_KEY_MASK)<<3;
+		}
+		buffer[birthday] = (nonce>>3) | collisionKey; // we have 6 bits available for validation
+		return 0;
+	}
+
+private:
+	uint32_t* buffer;
+};
+
+// first, create new datastructure
+template<int COLLISION_TABLE_SIZE, int COLLISION_RETRIES>
+class CHashTableLinearCollision {
+public:
+	CHashTableLinearCollision(uint32_t* _buffer) {
+		buffer = _buffer;
+        memset(buffer, 0x00, sizeof(uint32_t)*COLLISION_TABLE_SIZE);
+        num_checks = 0;
+        num_retries = 0;
+        for (int i = 0; i < COLLISION_RETRIES; i++) {
+        	num_found[i] = 0;
+        }
+	}
+	~CHashTableLinearCollision() {
+		// do nothing for now;
+	}
+	uint32_t check(uint64_t birthdayB, uint32_t nonce) {
+		uint32_t collisionKey = (uint32_t)((birthdayB>>18) & COLLISION_KEY_MASK);
+		num_checks++;
+		for(int i = 0; i < COLLISION_RETRIES; i++) {
+			uint64_t birthday = (birthdayB+i) % COLLISION_TABLE_SIZE;
+			if (!buffer[birthday]) {
+				buffer[birthday] = (nonce>>3) | collisionKey; // we have 6 bits available for validation
+				return 0;
+			} else if( (buffer[birthday]&COLLISION_KEY_MASK) == collisionKey ) {
+				num_found[i]++;
+				return (buffer[birthday]&~COLLISION_KEY_MASK)<<3;
+			}
+			num_retries++;
+		}
+		// not found after COLLISION_RETRIES
+		return 0;
+	}
+
+	uint32_t num_checks;
+	uint32_t num_retries;
+	uint32_t num_found[COLLISION_RETRIES];
+
+	void debug() {
+		std::cout << "checks: " << num_checks << " retries: " << num_retries << std::endl;
+		uint32_t total = 0;
+		for(int i = 0; i < COLLISION_RETRIES; i++) {
+			std::cout << "  found at [" << i << "]: " << (num_found[i]) << " " << std::endl;
+			total += num_found[i];
+		}
+		std::cout << "   Total found: " << total << std::endl;
+	}
+private:
+	uint32_t* buffer;
+};
+
+#ifndef RETRIES
+#define RETRIES 4
+#endif
+template<int COLLISION_TABLE_SIZE, sha512_func_t SHA512_FUNC>
+void _protoshares_process_V5(blockHeader_t* block,  CBlockProvider* bp,
+		uint32_t* _collisionIndices, unsigned int thread_id)
+{
+        // generate mid hash using sha256 (header hash)
+		blockHeader_t* ob = bp->getOriginalBlock();
+        uint8_t midHash[32];
+//        CHashTable<COLLISION_TABLE_SIZE> htable(_collisionIndices);
+        CHashTableLinearCollision<COLLISION_TABLE_SIZE, RETRIES> htable(_collisionIndices);
+
+		{
+			//SPH
+			sph_sha256_context c256;
+			sph_sha256_init(&c256);
+			sph_sha256(&c256, (unsigned char*)block, 80);
+			sph_sha256_close(&c256, midHash);
+			sph_sha256_init(&c256);
+			sph_sha256(&c256, (unsigned char*)midHash, 32);
+			sph_sha256_close(&c256, midHash);
+		}
+        // start search
+        uint8_t tempHash[32+4];
+        uint64_t resultHash[8];
+        memcpy(tempHash+4, midHash, 32);
+
+        #pragma unroll (8388608) //MAX_MOMENTUM_NONCE/BIRTHDAYS_PER_HASH
+        for(uint32_t n=0; n<MAX_MOMENTUM_NONCE; n += BIRTHDAYS_PER_HASH)
+        {
+        		*(uint32_t*)tempHash = n;
+                SHA512_FUNC(tempHash, 32+4, (unsigned char*)resultHash);
+
+                uint64_t birthdayB = resultHash[0] >> (64ULL-SEARCH_SPACE_BITS);
+				uint32_t collisionKey = (uint32_t)((birthdayB>>18) & COLLISION_KEY_MASK);
+				uint32_t birthdayA = htable.check(birthdayB, n+0);
+				if( birthdayA ) {
+					// try to avoid submitting bad shares
+					if (ob != bp->getOriginalBlock()) return;
+					protoshares_revalidateCollision(block, midHash, birthdayA, n+0, birthdayB, bp, SHA512_FUNC, thread_id);
+				}
+
+                birthdayB = resultHash[1] >> (64ULL-SEARCH_SPACE_BITS);
+				collisionKey = (uint32_t)((birthdayB>>18) & COLLISION_KEY_MASK);
+				birthdayA = htable.check(birthdayB, n+1);
+				if( birthdayA ) {
+					// try to avoid submitting bad shares
+					if (ob != bp->getOriginalBlock()) return;
+					protoshares_revalidateCollision(block, midHash, birthdayA, n+1, birthdayB, bp, SHA512_FUNC, thread_id);
+				}
+
+
+                birthdayB = resultHash[2] >> (64ULL-SEARCH_SPACE_BITS);
+				collisionKey = (uint32_t)((birthdayB>>18) & COLLISION_KEY_MASK);
+				birthdayA = htable.check(birthdayB, n+2);
+				if( birthdayA ) {
+					// try to avoid submitting bad shares
+					if (ob != bp->getOriginalBlock()) return;
+					protoshares_revalidateCollision(block, midHash, birthdayA, n+2, birthdayB, bp, SHA512_FUNC, thread_id);
+				}
+
+                birthdayB = resultHash[3] >> (64ULL-SEARCH_SPACE_BITS);
+				collisionKey = (uint32_t)((birthdayB>>18) & COLLISION_KEY_MASK);
+				birthdayA = htable.check(birthdayB, n+3);
+				if( birthdayA ) {
+					// try to avoid submitting bad shares
+					if (ob != bp->getOriginalBlock()) return;
+					protoshares_revalidateCollision(block, midHash, birthdayA, n+3, birthdayB, bp, SHA512_FUNC, thread_id);
+				}
+
+                birthdayB = resultHash[4] >> (64ULL-SEARCH_SPACE_BITS);
+				collisionKey = (uint32_t)((birthdayB>>18) & COLLISION_KEY_MASK);
+				birthdayA = htable.check(birthdayB, n+4);
+				if( birthdayA ) {
+					// try to avoid submitting bad shares
+					if (ob != bp->getOriginalBlock()) return;
+					protoshares_revalidateCollision(block, midHash, birthdayA, n+4, birthdayB, bp, SHA512_FUNC, thread_id);
+				}
+
+                birthdayB = resultHash[5] >> (64ULL-SEARCH_SPACE_BITS);
+				collisionKey = (uint32_t)((birthdayB>>18) & COLLISION_KEY_MASK);
+				birthdayA = htable.check(birthdayB, n+5);
+				if( birthdayA ) {
+					// try to avoid submitting bad shares
+					if (ob != bp->getOriginalBlock()) return;
+					protoshares_revalidateCollision(block, midHash, birthdayA, n+5, birthdayB, bp, SHA512_FUNC, thread_id);
+				}
+
+                birthdayB = resultHash[6] >> (64ULL-SEARCH_SPACE_BITS);
+				collisionKey = (uint32_t)((birthdayB>>18) & COLLISION_KEY_MASK);
+				birthdayA = htable.check(birthdayB, n+6);
+				if( birthdayA ) {
+					// try to avoid submitting bad shares
+					if (ob != bp->getOriginalBlock()) return;
+					protoshares_revalidateCollision(block, midHash, birthdayA, n+6, birthdayB, bp, SHA512_FUNC, thread_id);
+				}
+
+                birthdayB = resultHash[7] >> (64ULL-SEARCH_SPACE_BITS);
+				collisionKey = (uint32_t)((birthdayB>>18) & COLLISION_KEY_MASK);
+				birthdayA = htable.check(birthdayB, n+7);
+				if( birthdayA ) {
+					// try to avoid submitting bad shares
+					if (ob != bp->getOriginalBlock()) return;
+					protoshares_revalidateCollision(block, midHash, birthdayA, n+7, birthdayB, bp, SHA512_FUNC, thread_id);
+				}
+
+
+        }
+#ifdef DEBUG
+        if (thread_id == 0) {
+        	htable.debug();
+        }
+#endif
+}
+
 
 void sha512_func_avx(unsigned char* in, unsigned int size, unsigned char* out) {
 	//AVX/SSE
@@ -521,7 +712,7 @@ CProtoshareProcessor::~CProtoshareProcessor() {
 
 void CProtoshareProcessor::protoshares_process(blockHeader_t* block,
 		CBlockProvider* bp) {
-#define process_func _protoshares_process_V3 
+#define process_func _protoshares_process_V5
 	if (shamode == AVXSSE4) {
 #define sha_func_to_use sha512_func_avx
 		switch (collisionTableBits) {
