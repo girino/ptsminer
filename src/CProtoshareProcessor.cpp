@@ -6,6 +6,9 @@
  */
 
 #include "CProtoshareProcessor.h"
+#include "sha2.h"
+#include "sph_sha2.h"
+#include "sha512.h"
 
 #define repeat2(x) {x} {x}
 #define repeat4(x) repeat2(x) repeat2(x)
@@ -242,6 +245,7 @@ void _protoshares_process_V3(blockHeader_t* block,  CBlockProvider* bp,
         uint64_t resultHash[8];
         memcpy(tempHash+4, midHash, 32);
 
+        #pragma unroll (8388608) //MAX_MOMENTUM_NONCE/BIRTHDAYS_PER_HASH
         for(uint32_t n=0; n<MAX_MOMENTUM_NONCE; n += BIRTHDAYS_PER_HASH)
         {
         		*(uint32_t*)tempHash = n;
@@ -494,6 +498,12 @@ void sha512_func_sph(unsigned char* in, unsigned int size, unsigned char* out) {
 	sph_sha512_close(&c512_sph, out);
 }
 
+void sha512_func_fips(unsigned char* in, unsigned int size, unsigned char* out) {
+	sha512_ctx c512_yp; //SPH
+	sha512_init(&c512_yp);
+	sha512_update_final(&c512_yp, in, size, out);
+}
+
 CProtoshareProcessor::CProtoshareProcessor(SHAMODE _shamode,
 		unsigned int _collisionTableBits,
 		unsigned int _thread_id) {
@@ -513,33 +523,53 @@ void CProtoshareProcessor::protoshares_process(blockHeader_t* block,
 		CBlockProvider* bp) {
 #define process_func _protoshares_process_V3 
 	if (shamode == AVXSSE4) {
+#define sha_func_to_use sha512_func_avx
 		switch (collisionTableBits) {
-		case 20: process_func<(1<<20),sha512_func_avx>(block,  bp, collisionIndices, thread_id); break;
-		case 21: process_func<(1<<21),sha512_func_avx>(block,  bp, collisionIndices, thread_id); break;
-		case 22: process_func<(1<<22),sha512_func_avx>(block,  bp, collisionIndices, thread_id); break;
-		case 23: process_func<(1<<23),sha512_func_avx>(block,  bp, collisionIndices, thread_id); break;
-		case 24: process_func<(1<<24),sha512_func_avx>(block,  bp, collisionIndices, thread_id); break;
-		case 25: process_func<(1<<25),sha512_func_avx>(block,  bp, collisionIndices, thread_id); break;
-		case 26: process_func<(1<<26),sha512_func_avx>(block,  bp, collisionIndices, thread_id); break;
-		case 27: process_func<(1<<27),sha512_func_avx>(block,  bp, collisionIndices, thread_id); break;
-		case 28: process_func<(1<<28),sha512_func_avx>(block,  bp, collisionIndices, thread_id); break;
-		case 29: process_func<(1<<29),sha512_func_avx>(block,  bp, collisionIndices, thread_id); break;
-		case 30: process_func<(1<<30),sha512_func_avx>(block,  bp, collisionIndices, thread_id); break;
+		case 20: process_func<(1<<20),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
+		case 21: process_func<(1<<21),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
+		case 22: process_func<(1<<22),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
+		case 23: process_func<(1<<23),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
+		case 24: process_func<(1<<24),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
+		case 25: process_func<(1<<25),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
+		case 26: process_func<(1<<26),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
+		case 27: process_func<(1<<27),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
+		case 28: process_func<(1<<28),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
+		case 29: process_func<(1<<29),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
+		case 30: process_func<(1<<30),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
 		}
+#undef sha_func_to_use
 	} else if (shamode == SPHLIB) {
+#define sha_func_to_use sha512_func_sph
 		switch (collisionTableBits) {
-		case 20: process_func<(1<<20),sha512_func_sph>(block,  bp, collisionIndices, thread_id); break;
-		case 21: process_func<(1<<21),sha512_func_sph>(block,  bp, collisionIndices, thread_id); break;
-		case 22: process_func<(1<<22),sha512_func_sph>(block,  bp, collisionIndices, thread_id); break;
-		case 23: process_func<(1<<23),sha512_func_sph>(block,  bp, collisionIndices, thread_id); break;
-		case 24: process_func<(1<<24),sha512_func_sph>(block,  bp, collisionIndices, thread_id); break;
-		case 25: process_func<(1<<25),sha512_func_sph>(block,  bp, collisionIndices, thread_id); break;
-		case 26: process_func<(1<<26),sha512_func_sph>(block,  bp, collisionIndices, thread_id); break;
-		case 27: process_func<(1<<27),sha512_func_sph>(block,  bp, collisionIndices, thread_id); break;
-		case 28: process_func<(1<<28),sha512_func_sph>(block,  bp, collisionIndices, thread_id); break;
-		case 29: process_func<(1<<29),sha512_func_sph>(block,  bp, collisionIndices, thread_id); break;
-		case 30: process_func<(1<<30),sha512_func_sph>(block,  bp, collisionIndices, thread_id); break;
+		case 20: process_func<(1<<20),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
+		case 21: process_func<(1<<21),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
+		case 22: process_func<(1<<22),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
+		case 23: process_func<(1<<23),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
+		case 24: process_func<(1<<24),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
+		case 25: process_func<(1<<25),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
+		case 26: process_func<(1<<26),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
+		case 27: process_func<(1<<27),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
+		case 28: process_func<(1<<28),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
+		case 29: process_func<(1<<29),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
+		case 30: process_func<(1<<30),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
 		}
+#undef sha_func_to_use
+	} else if (shamode == FIPS180_2) {
+#define sha_func_to_use sha512_func_fips
+		switch (collisionTableBits) {
+		case 20: process_func<(1<<20),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
+		case 21: process_func<(1<<21),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
+		case 22: process_func<(1<<22),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
+		case 23: process_func<(1<<23),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
+		case 24: process_func<(1<<24),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
+		case 25: process_func<(1<<25),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
+		case 26: process_func<(1<<26),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
+		case 27: process_func<(1<<27),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
+		case 28: process_func<(1<<28),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
+		case 29: process_func<(1<<29),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
+		case 30: process_func<(1<<30),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
+		}
+#undef sha_func_to_use
 	}
 }
 

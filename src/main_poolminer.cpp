@@ -33,6 +33,7 @@
 
 int collision_table_bits;
 bool use_avxsse4;
+bool use_sphlib;
 size_t thread_num_max;
 static size_t fee_to_pay;
 static size_t miner_id;
@@ -229,8 +230,10 @@ public:
 		boost::this_thread::sleep(boost::posix_time::seconds(1));
 		if (use_avxsse4)
 			mineloop_start(AVXSSE4, collision_table_bits); // <-- work loop
-		else
+		else if (use_sphlib)
 			mineloop_start(SPHLIB, collision_table_bits); // ^
+		else
+			mineloop_start(FIPS180_2, collision_table_bits); // ^
 		std::cout << "[WORKER" << _id << "] Bye Bye!" << std::endl;
 	}
 
@@ -607,6 +610,7 @@ int main(int argc, char **argv)
 	}
 
 	use_avxsse4 = false;
+	use_sphlib = true;
 	if (mode_param == "avx") {
 		Init_SHA512_avx();
 		use_avxsse4 = true;
@@ -617,6 +621,9 @@ int main(int argc, char **argv)
 		std::cout << "using SSE4" << std::endl;
 	} else if (mode_param == "sph") {
 		std::cout << "using SPHLIB" << std::endl;
+	} else if (mode_param == "fips") {
+		std::cout << "using FIPS 180-2" << std::endl;
+		use_sphlib = false;
 	} else {
 #ifdef	__x86_64__
 		std::cout << "**" << "SSE4/AVX auto-detection" << std::endl;

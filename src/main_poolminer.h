@@ -17,7 +17,7 @@ extern "C" {
 #include "cpuid.h"
 #include "sha512.h"
 
-enum SHAMODE { SPHLIB = 0, AVXSSE4 };
+enum SHAMODE { SPHLIB = 0, AVXSSE4, FIPS180_2 };
 
 typedef struct {
   // comments: BYTES <index> + <length>

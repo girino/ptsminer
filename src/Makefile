@@ -1,84 +1,11 @@
 # -*- mode: Makefile; -*-
-# Copyright (c) 2011 Bitcoin Developers
-# Distributed under the MIT/X11 software license, see the accompanying
-# file COPYING or http://www.opensource.org/licenses/mit-license.php.
+# Generic makefile, do not use;
 
-# Mac OS X makefile for bitcoin
-# Originally by Laszlo Hanyecz (solar@heliacal.net)
-
-#CXX=g++
-#CC=gcc
-
-DEPSDIR=/opt/local
-
-INCLUDEPATHS= \
- -I"$(CURDIR)" \
- -I"$(CURDIR)"/obj \
- -I"$(DEPSDIR)/include" \
-
-LIBPATHS= \
- -L"$(DEPSDIR)/lib" \
-
-LIBS= -dead_strip
-
-ifdef STATIC
-# Build STATIC if you are redistributing the bitcoind binary
-LIBS += \
- $(DEPSDIR)/lib/libboost_system-mt.a \
- $(DEPSDIR)/lib/libboost_filesystem-mt.a \
- $(DEPSDIR)/lib/libboost_program_options-mt.a \
- $(DEPSDIR)/lib/libboost_thread-mt.a \
- $(DEPSDIR)/lib/libboost_chrono-mt.a \
- -lz
-else
-LIBS += \
- -lboost_system-mt \
- -lboost_filesystem-mt \
- -lboost_program_options-mt \
- -lboost_thread-mt \
- -lboost_chrono-mt \
- -lz
-endif
-
-DEFS=-DMAC_OSX -DMSG_NOSIGNAL=0 -DBOOST_SPIRIT_THREADSAFE
-
-ifdef RELEASE
-# Compile for maximum compatibility and smallest size.
-# This requires that dependencies are compiled
-# the same way.
-CFLAGS = -mmacosx-version-min=10.5 -arch i386 -O3 
-else
-DEBUGFLAGS = # -g
-endif
-
-# ppc doesn't work because we don't support big-endian
-CFLAGS += -Wall -Wextra -Wformat -Wformat-security -Wno-unused-parameter \
-    $(DEBUGFLAGS) $(DEFS) $(INCLUDEPATHS)
-
-OBJS= \
-	obj/cpuid.o \
-	obj/sha512_avx.o \
-	obj/sha512_sse4.o \
-	obj/sha512.o \
-	obj/sph_sha2.o \
-	obj/sph_sha2big.o \
-	obj/CProtoshareProcessor.o \
-	obj/main_poolminer.o
-
-all: ptsminer
-
-obj/%.o: %.cpp
-	$(CXX) -c -O3 $(CFLAGS) $(DEBUGFLAGS) $(xCOMPILEFLAGS) -o $@ $<
-obj/sph_%.o: sph_%.c
-	$(CXX) -c -O2 $(CFLAGS) $(DEBUGFLAGS) -fpermissive -o $@ $<
-obj/%.o: %.c
-	$(CXX) -c -O3 $(CFLAGS) $(DEBUGFLAGS) -fpermissive -o $@ $<
-
-obj/%.o: intel/%.asm
-	yasm -D__APPLE__ -f macho64 -o $@ $<
-
-ptsminer: $(OBJS:obj/%=obj/%)
-	$(CXX) $(xLDFLAGS) -o $@ $(LIBPATHS) $^ $(LIBS)
+all:
+	@echo "Please use the makefile for your OS:"
+	@echo "            Linux: make -f makefile.unix"
+	@echo "              OSX: make -f makefile.osx"
+	@echo "   Windows+cygwin: make -f makefile.cygwin"
 
 clean:
 	rm -f ptsminer
