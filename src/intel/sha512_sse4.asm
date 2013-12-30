@@ -1,41 +1,72 @@
+;
+; This file is a part of Pcompress, a chunked parallel multi-
+; algorithm lossless compression and decompression program.
+;
+; Copyright (C) 2012-2013 Moinak Ghosh. All rights reserved.
+; Use is subject to license terms.
+;
+; This program is free software; you can redistribute it and/or
+; modify it under the terms of the GNU Lesser General Public
+; License as published by the Free Software Foundation; either
+; version 3 of the License, or (at your option) any later version.
+;
+; This program is distributed in the hope that it will be useful,
+; but WITHOUT ANY WARRANTY; without even the implied warranty of
+; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+; Lesser General Public License for more details.
+;
+; You should have received a copy of the GNU Lesser General Public
+; License along with this program.
+; If not, see <http://www.gnu.org/licenses/>.
+;
+; moinakg@belenix.org, http://moinakg.wordpress.com/
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; Copyright (c) 2012, Intel Corporation 
+; NOTE:
+; The code in this file is covered by the Intel Open Software License
+; Agreement a copy of which is provided in the file
+; open_software_license.txt
+;
+; This source was downloaded from the following URL:
+; http://www.intel.com/content/www/us/en/intelligent-systems/crystal-forest-gladden/sha512-code-edc.html
+;
+; Only the Intel license terms will apply when this file is used outside
+; of this software project.
+;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Copyright 2012 Intel Corporation All Rights Reserved.
 ; 
-; All rights reserved. 
+; The source code contained or described herein and all documents
+; related to the source code ("Material") are owned by Intel Corporation
+; or its suppliers or licensors. Title to the Material remains with
+; Intel Corporation or its suppliers and licensors. The Material may
+; contain trade secrets and proprietary and confidential information of
+; Intel Corporation and its suppliers and licensors, and is protected by
+; worldwide copyright and trade secret laws and treaty provisions. No
+; part of the Material may be used, copied, reproduced, modified,
+; published, uploaded, posted, transmitted, distributed, or disclosed in
+; any way without Intel's prior express written permission.
 ; 
-; Redistribution and use in source and binary forms, with or without
-; modification, are permitted provided that the following conditions are
-; met: 
+; No license under any patent, copyright, trade secret or other
+; intellectual property right is granted to or conferred upon you by
+; disclosure or delivery of the Materials, either expressly, by
+; implication, inducement, estoppel or otherwise. Any license under such
+; intellectual property rights must be express and approved by Intel in
+; writing.
 ; 
-; * Redistributions of source code must retain the above copyright
-;   notice, this list of conditions and the following disclaimer.  
-; 
-; * Redistributions in binary form must reproduce the above copyright
-;   notice, this list of conditions and the following disclaimer in the
-;   documentation and/or other materials provided with the
-;   distribution. 
-; 
-; * Neither the name of the Intel Corporation nor the names of its
-;   contributors may be used to endorse or promote products derived from
-;   this software without specific prior written permission. 
-; 
-; 
-; THIS SOFTWARE IS PROVIDED BY INTEL CORPORATION "AS IS" AND ANY
-; EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-; PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL INTEL CORPORATION OR
-; CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-; EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-; PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-; PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-; LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-; NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+; Unless otherwise agreed by Intel in writing, you may not remove or
+; alter this notice or any other notice embedded in Materials by Intel
+; or Intel's suppliers or licensors in any way.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
 ; Example YASM command lines:
 ; Windows:  yasm -f x64 -D WINABI sha512_sse4.asm
 ; Linux:    yasm -f elf64 sha512_sse4.asm
+;
+; Alternative Example YASM command lines:
+; Windows:  yasm -Xvc -f x64 -D WINABI -rnasm -pnasm -o sha512_sse4.obj -g cv8 sha512_sse4.asm
+; Linux:    yasm -f x64 -f elf64 -X gnu -g dwarf2 -D LINUX -o sha512_sse4.o sha512_sse4.asm
 ;
 
 BITS 64
@@ -253,8 +284,13 @@ endstruc
 ; The size of the message pointed to by M must be an integer multiple of SHA512
 ;   message blocks.
 ; L is the message length in SHA512 blocks.
+%ifdef __APPLE__
+global _sha512_sse4:function
+_sha512_sse4:
+%else
 global sha512_sse4:function
 sha512_sse4:
+%endif
 	cmp msglen, 0
 	je .nowork
 	

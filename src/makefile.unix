@@ -123,10 +123,13 @@ OBJS= \
 	obj/sph_sha2.o \
 	obj/sph_sha2big.o \
 	obj/CProtoshareProcessor.o \
+	obj/sha2.o \
 	obj/main_poolminer.o
 
 all: ptsminer
 
+obj/sha2.o: sha2.cpp
+	$(CXX) -c -O3 -DUNROLL_LOOPS $(CFLAGS) $(DEBUGFLAGS) $(xCOMPILEFLAGS) -o $@ $<
 obj/%.o: %.cpp
 	$(CXX) -c -O2 $(CFLAGS) $(DEBUGFLAGS) $(xCOMPILEFLAGS) -o $@ $<
 obj/sph_%.o: sph_%.c
