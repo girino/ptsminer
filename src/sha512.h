@@ -61,6 +61,48 @@
 /* Hash size in 64-bit words */
 #define SHA512_HASH_WORDS 8
 
+//LITTLE ENDIAN ONLY
+
+#if defined(__MINGW32__) || defined(__MINGW64__)
+
+static __inline unsigned short
+bswap_16 (unsigned short __x)
+{
+  return (__x >> 8) | (__x << 8);
+}
+
+static __inline unsigned int
+bswap_32 (unsigned int __x)
+{
+  return (bswap_16 (__x & 0xffff) << 16) | (bswap_16 (__x >> 16));
+}
+
+static __inline unsigned long long
+bswap_64 (unsigned long long __x)
+{
+  return (((unsigned long long) bswap_32 (__x & 0xffffffffull)) << 32) | (bswap_32 (__x >> 32));
+}
+
+#define BYTESWAP(x) bswap_32(x)
+#define BYTESWAP64(x) bswap_64(x)
+
+#elif defined(__APPLE__)
+
+#include <libkern/OSByteOrder.h>
+
+#define BYTESWAP(x) OSSwapBigToHostInt32(x)
+#define BYTESWAP64(x) OSSwapBigToHostInt64(x)
+
+#else
+
+#include <endian.h> //glibc
+
+#define BYTESWAP(x) be32toh(x)
+#define BYTESWAP64(x) be64toh(x)
+
+#endif /* defined(__MINGW32__) || defined(__MINGW64__) */
+
+
 typedef struct _SHA512_Context {
   uint64_t totalLength[2], blocks;
   uint64_t hash[SHA512_HASH_WORDS];
@@ -90,7 +132,9 @@ void SHA512_Update_Special (SHA512_Context *sc, const void *vdata, size_t len);
  */
 extern void sha512_sse4(const void *input_data, void *digest, uint64_t num_blks);
 extern void sha512_avx(const void *input_data, void *digest, uint64_t num_blks);
-
+typedef void (*update_func_ptr)(const void *input_data, void *digest, uint64_t num_blks);
+typedef void (*update_func_ptr2)(const void *input_data, void *digest);
+extern update_func_ptr sha512_update_func;
 #ifdef __cplusplus
 }
 #endif

@@ -17,6 +17,26 @@
 #define repeat32(x) repeat16(x) repeat16(x)
 #define repeat64(x) repeat32(x) repeat32(x)
 
+static const uint64_t sha512_h0[SHA512_HASH_WORDS] = {
+  0x6a09e667f3bcc908LL,
+  0xbb67ae8584caa73bLL,
+  0x3c6ef372fe94f82bLL,
+  0xa54ff53a5f1d36f1LL,
+  0x510e527fade682d1LL,
+  0x9b05688c2b3e6c1fLL,
+  0x1f83d9abfb41bd6bLL,
+  0x5be0cd19137e2179LL
+};
+
+static inline void swap512(uint64_t *h)
+{
+	h[0] = BYTESWAP64(h[0]); h[1] = BYTESWAP64(h[1]);
+	h[2] = BYTESWAP64(h[2]); h[3] = BYTESWAP64(h[3]);
+	h[4] = BYTESWAP64(h[4]); h[5] = BYTESWAP64(h[5]);
+	h[6] = BYTESWAP64(h[6]); h[7] = BYTESWAP64(h[7]);
+}
+
+
 bool protoshares_revalidateCollision(blockHeader_t* block, uint8_t* midHash, uint32_t indexA_orig,
 		uint32_t indexB, uint64_t birthdayB, CBlockProvider* bp,
 		sha512_func_t sha512_func, uint32_t thread_id)
@@ -240,16 +260,24 @@ void _protoshares_process_V3(blockHeader_t* block,  CBlockProvider* bp,
 		}
         memset(collisionIndices, 0x00, sizeof(uint32_t)*COLLISION_TABLE_SIZE);
         // start search
-        uint8_t tempHash[32+4];
         uint64_t resultHash[8];
+
+        uint8_t tempHash[128];
+        memset(tempHash, 0, 128);
+        tempHash[36] = 0x80;
+        *((uint32_t *)(tempHash + 124)) = 0x20010000;
         memcpy(tempHash+4, midHash, 32);
 
         #pragma unroll (8388608) //MAX_MOMENTUM_NONCE/BIRTHDAYS_PER_HASH
         for(uint32_t n=0; n<MAX_MOMENTUM_NONCE; n += BIRTHDAYS_PER_HASH)
         {
         		*(uint32_t*)tempHash = n;
-                SHA512_FUNC(tempHash, 32+4, (unsigned char*)resultHash);
-
+                if(sha512_update_func == NULL)  SHA512_FUNC(tempHash, 32+4, (unsigned char*)resultHash);
+                else {
+                    memcpy(resultHash, sha512_h0, 64);
+                    ((update_func_ptr2)sha512_update_func)((void *)tempHash, resultHash);
+                    swap512(resultHash);
+                }
                 uint64_t birthdayB = resultHash[0] >> (64ULL-SEARCH_SPACE_BITS);
 				uint32_t collisionKey = (uint32_t)((birthdayB>>18) & COLLISION_KEY_MASK);
 				uint64_t birthday = birthdayB & (COLLISION_TABLE_SIZE-1);

@@ -70,48 +70,6 @@
 #include <string.h>
 #include "sha512.h"
 
-//LITTLE ENDIAN ONLY
-
-#if defined(__MINGW32__) || defined(__MINGW64__)
-
-static __inline unsigned short
-bswap_16 (unsigned short __x)
-{
-  return (__x >> 8) | (__x << 8);
-}
-
-static __inline unsigned int
-bswap_32 (unsigned int __x)
-{
-  return (bswap_16 (__x & 0xffff) << 16) | (bswap_16 (__x >> 16));
-}
-
-static __inline unsigned long long
-bswap_64 (unsigned long long __x)
-{
-  return (((unsigned long long) bswap_32 (__x & 0xffffffffull)) << 32) | (bswap_32 (__x >> 32));
-}
-
-#define BYTESWAP(x) bswap_32(x)
-#define BYTESWAP64(x) bswap_64(x)
-
-#elif defined(__APPLE__)
-
-#include <libkern/OSByteOrder.h>
-
-#define BYTESWAP(x) OSSwapBigToHostInt32(x)
-#define BYTESWAP64(x) OSSwapBigToHostInt64(x)
-
-#else
-
-#include <endian.h> //glibc
-
-#define BYTESWAP(x) be32toh(x)
-#define BYTESWAP64(x) be64toh(x)
-
-#endif /* defined(__MINGW32__) || defined(__MINGW64__) */
-
-typedef void (*update_func_ptr)(const void *input_data, void *digest, uint64_t num_blks);
 
 static const uint8_t padding[SHA512_BLOCK_SIZE] = {
   0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -154,7 +112,7 @@ static const uint64_t iv256[SHA512_HASH_WORDS] = {
   0x0eb72ddc81c52ca2LL
 };
 
-static update_func_ptr sha512_update_func;
+update_func_ptr sha512_update_func = NULL;
 
 void
 Init_SHA512_avx ()
