@@ -133,6 +133,7 @@ void SHA512_Final (SHA512_Context *sc, uint8_t hash[SHA512_HASH_SIZE]);
 extern void sha512_sse4(const void *input_data, void *digest, uint64_t num_blks);
 extern void sha512_avx(const void *input_data, void *digest, uint64_t num_blks);
 typedef void (*update_func_ptr)(const void *input_data, void *digest, uint64_t num_blks);
+typedef void (*update_func_ptr2)(const void *input_data, void *digest);
 extern update_func_ptr sha512_update_func;
 #ifdef __cplusplus
 }

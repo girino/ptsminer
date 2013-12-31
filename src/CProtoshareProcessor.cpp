@@ -272,7 +272,7 @@ void _protoshares_process_V3(blockHeader_t* block,  CBlockProvider* bp,
                 if(sha512_update_func == NULL)  SHA512_FUNC(tempHash, 32+4, (unsigned char*)resultHash);
                 else {
                     memcpy(resultHash, sha512_h0, 64);
-                    sha512_update_func((void *)tempHash, resultHash, 1);
+                    ((update_func_ptr2)sha512_update_func)((void *)tempHash, resultHash);
                     swap512(resultHash);
                 }
                 uint64_t birthdayB = resultHash[0] >> (64ULL-SEARCH_SPACE_BITS);
