@@ -757,41 +757,66 @@ void _protoshares_process_V5(blockHeader_t* block,  CBlockProvider* bp,
 #define FHT_SIZE ((1<<26)+(1<<26)) // 100% extra space;
 // first, create new datastructure
 
-CFullHashTable::CFullHashTable() {
-	values = (uint32_t*)malloc(sizeof(uint32_t)*FHT_SIZE);
-	keys = (uint64_t*)malloc(sizeof(uint64_t)*FHT_SIZE);
-	clear();
-}
+//CFullHashTable::CFullHashTable() {
+//	values = (uint32_t*)malloc(sizeof(uint32_t)*FHT_SIZE);
+//	keys = (uint64_t*)malloc(sizeof(uint64_t)*FHT_SIZE);
+//	clear();
+//}
+//
+//void CFullHashTable::clear() {
+//	memset(values, 0x00, sizeof(uint32_t)*FHT_SIZE);
+//	memset(keys, 0x00, sizeof(uint64_t)*FHT_SIZE);
+//}
+//CFullHashTable::~CFullHashTable() {
+//	delete values;
+//	delete keys;
+//}
+//uint32_t CFullHashTable::check(uint64_t key, uint32_t value) {
+//	for (int i = 0; i < FHT_SIZE; i++) {
+//		uint64_t pos = (key+i) % FHT_SIZE;
+//		// situations:
+//		// bucket is empty -> fill it.
+//		if (keys[pos] == 0) {
+//			keys[pos] = key;
+//			values[pos] = value;
+//			return 0;
+//		}
+//		// bucket is full and right key -> return;
+//		else if (keys[pos] == key) {
+//			return values[pos];
+//		}
+//		// bucket is full, but wrong key -> next
+//	}
+//	// no empty place, return;
+//	return 0;
+//}
+//
 
-void CFullHashTable::clear() {
-	memset(values, 0x00, sizeof(uint32_t)*FHT_SIZE);
-	memset(keys, 0x00, sizeof(uint64_t)*FHT_SIZE);
-}
-CFullHashTable::~CFullHashTable() {
-	delete values;
-	delete keys;
-}
-uint32_t CFullHashTable::check(uint64_t key, uint32_t value) {
-	for (int i = 0; i < FHT_SIZE; i++) {
-		uint64_t pos = (key+i) % FHT_SIZE;
-		// situations:
-		// bucket is empty -> fill it.
-		if (keys[pos] == 0) {
-			keys[pos] = key;
-			values[pos] = value;
-			return 0;
-		}
-		// bucket is full and right key -> return;
-		else if (keys[pos] == key) {
-			return values[pos];
-		}
-		// bucket is full, but wrong key -> next
+// first, create new datastructure
+#define COLLISION_TABLE_SIZE (1<<27)
+
+	CFullHashTable::CFullHashTable() {
+		buffer = (uint32_t*)malloc(sizeof(uint32_t)*COLLISION_TABLE_SIZE);;
+        memset(buffer, 0x00, sizeof(uint32_t)*COLLISION_TABLE_SIZE);
 	}
-	// no empty place, return;
-	return 0;
-}
+	CFullHashTable::~CFullHashTable() {
+		// do nothing for now;
+	}
+	void CFullHashTable::clear() {
+        memset(buffer, 0x00, sizeof(uint32_t)*COLLISION_TABLE_SIZE);
+	}
+	__inline uint32_t CFullHashTable::check(uint64_t birthdayB, uint32_t nonce) {
+		uint32_t collisionKey = (uint32_t)((birthdayB>>18) & COLLISION_KEY_MASK);
+		uint64_t birthday = birthdayB % (COLLISION_TABLE_SIZE);
+		if( ((buffer[birthday]&COLLISION_KEY_MASK) == collisionKey)) {
+			return (buffer[birthday]&~COLLISION_KEY_MASK)<<3;
+		}
+		buffer[birthday] = (nonce>>3) | collisionKey; // we have 6 bits available for validation
+		return 0;
+	}
 
-void process_internal_loop(uint8_t midHash[32], sha512_func_t SHA512_FUNC,
+void process_internal_loop(uint8_t midHash[32],
+		sha512_func_t SHA512_FUNC,
 		unsigned int thread_id,
 		CFullHashTable* htable, CBlockProvider* bp,
 		blockHeader_t* block, int from, int to) {
@@ -809,15 +834,17 @@ void process_internal_loop(uint8_t midHash[32], sha512_func_t SHA512_FUNC,
 			uint64_t birthdayB = resultHash[i] >> (64ULL - SEARCH_SPACE_BITS);
 			uint32_t indexA = htable->check(birthdayB, n + i);
 			if (indexA) {
-				protoshares_revalidateCollision2(block, indexA, n + i, bp,
-						thread_id);
+//				protoshares_revalidateCollision2(block, indexA, n + i, bp,
+//						thread_id);
+				protoshares_revalidateCollision(block, midHash, indexA, n + i, birthdayB, bp,
+						SHA512_FUNC, thread_id);
 			}
 		}
 	}
 }
 
 void _protoshares_process_V6(blockHeader_t* block,  CBlockProvider* bp,
-		CFullHashTable *htable, unsigned int thread_id, sha512_func_t sha512_func)
+		CFullHashTable *htable, unsigned int thread_id, sha512_func_t sha512_func, int numThreads)
 {
         // generate mid hash using sha256 (header hash)
 		blockHeader_t* ob = bp->getOriginalBlock();
@@ -833,23 +860,27 @@ void _protoshares_process_V6(blockHeader_t* block,  CBlockProvider* bp,
 			sph_sha256(&c256, (unsigned char*)midHash, 32);
 			sph_sha256_close(&c256, midHash);
 		}
-        // start search
-        boost::thread* threads[4];
+		if (numThreads == 1) {
+			process_internal_loop(midHash, sha512_func, thread_id, htable,
+			    			bp, block, 0, MAX_MOMENTUM_NONCE);
+		} else {
+			// start search
+			boost::thread* threads[numThreads];
 
-        int num_threads = 4;
-        for (int i = 0; i < num_threads; i++) {
-            int from = i * ((1<<26)/num_threads);
-            int to = (i+1) * ((1<<26)/num_threads);
-            threads[i] = new boost::thread(process_internal_loop, midHash, sha512_func, thread_id, htable,
-    			bp, block, from, to);
+			for (int i = 0; i < numThreads; i++) {
+				int from = i * (MAX_MOMENTUM_NONCE/numThreads);
+				int to = (i+1) * (MAX_MOMENTUM_NONCE/numThreads);
+				threads[i] = new boost::thread(process_internal_loop, midHash, sha512_func, thread_id, htable,
+					bp, block, from, to);
 
-        }
-        for (int i = 0; i < num_threads; i++) {
-        	if (threads[i] && threads[i]->joinable()) {
-        		threads[i]->join();
-        	}
-        	delete threads[i];
-        }
+			}
+			for (int i = 0; i < numThreads; i++) {
+				if (threads[i] && threads[i]->joinable()) {
+					threads[i]->join();
+				}
+				delete threads[i];
+			}
+		}
 }
 
 void sha512_func_avx(unsigned char* in, unsigned int size, unsigned char* out) {
@@ -903,68 +934,45 @@ CProtoshareProcessor::CProtoshareProcessor(SHAMODE _shamode,
 
 	// allocate collision table
 	//collisionIndices = (uint32_t*)malloc(sizeof(uint32_t)*(1<<collisionTableBits));
-//	htable = new CFullHashTable();
+	htable = new CFullHashTable();
+
 }
 
 CProtoshareProcessor::~CProtoshareProcessor() {
 //	delete collisionIndices;
-//	delete htable;
+	delete htable;
 }
 
 
 void CProtoshareProcessor::protoshares_process(blockHeader_t* block,
-		CBlockProvider* bp, CFullHashTable* htable) {
+		CBlockProvider* bp, int num_threads) {
 	htable->clear();
 #define process_func _protoshares_process_V6
 	if (shamode == AVXSSE4) {
 #define sha_func_to_use sha512_func_avx
-		process_func(block,  bp, htable, thread_id, sha_func_to_use);
+		process_func(block,  bp, htable, thread_id, sha_func_to_use, num_threads);
 //		switch (collisionTableBits) {
-//		case 20: process_func<(1<<20),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
-//		case 21: process_func<(1<<21),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
-//		case 22: process_func<(1<<22),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
-//		case 23: process_func<(1<<23),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
-//		case 24: process_func<(1<<24),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
-//		case 25: process_func<(1<<25),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
-//		case 26: process_func<(1<<26),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
-//		case 27: process_func<(1<<27),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
-//		case 28: process_func<(1<<28),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
-//		case 29: process_func<(1<<29),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
-//		case 30: process_func<(1<<30),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
+//		case 26: process_func<(1<<26)>(block,  bp, htable, thread_id, sha_func_to_use); break;
+//		case 27: process_func<(1<<27)>(block,  bp, htable, thread_id, sha_func_to_use); break;
+//		case 28: process_func<(1<<28)>(block,  bp, htable, thread_id, sha_func_to_use); break;
 //		}
 #undef sha_func_to_use
 	} else if (shamode == SPHLIB) {
 #define sha_func_to_use sha512_func_sph
-		process_func(block,  bp, htable, thread_id, sha_func_to_use);
+		process_func(block,  bp, htable, thread_id, sha_func_to_use, num_threads);
 //		switch (collisionTableBits) {
-//		case 20: process_func<(1<<20),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
-//		case 21: process_func<(1<<21),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
-//		case 22: process_func<(1<<22),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
-//		case 23: process_func<(1<<23),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
-//		case 24: process_func<(1<<24),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
-//		case 25: process_func<(1<<25),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
-//		case 26: process_func<(1<<26),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
-//		case 27: process_func<(1<<27),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
-//		case 28: process_func<(1<<28),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
-//		case 29: process_func<(1<<29),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
-//		case 30: process_func<(1<<30),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
+//		case 26: process_func<(1<<26)>(block,  bp, htable, thread_id, sha_func_to_use); break;
+//		case 27: process_func<(1<<27)>(block,  bp, htable, thread_id, sha_func_to_use); break;
+//		case 28: process_func<(1<<28)>(block,  bp, htable, thread_id, sha_func_to_use); break;
 //		}
 #undef sha_func_to_use
 	} else if (shamode == FIPS180_2) {
 #define sha_func_to_use sha512_func_fips
-		process_func(block,  bp, htable, thread_id, sha_func_to_use);
+		process_func(block,  bp, htable, thread_id, sha_func_to_use, num_threads);
 //		switch (collisionTableBits) {
-//		case 20: process_func<(1<<20),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
-//		case 21: process_func<(1<<21),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
-//		case 22: process_func<(1<<22),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
-//		case 23: process_func<(1<<23),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
-//		case 24: process_func<(1<<24),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
-//		case 25: process_func<(1<<25),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
-//		case 26: process_func<(1<<26),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
-//		case 27: process_func<(1<<27),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
-//		case 28: process_func<(1<<28),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
-//		case 29: process_func<(1<<29),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
-//		case 30: process_func<(1<<30),sha_func_to_use>(block,  bp, collisionIndices, thread_id); break;
+//		case 26: process_func<(1<<26)>(block,  bp, htable, thread_id, sha_func_to_use); break;
+//		case 27: process_func<(1<<27)>(block,  bp, htable, thread_id, sha_func_to_use); break;
+//		case 28: process_func<(1<<28)>(block,  bp, htable, thread_id, sha_func_to_use); break;
 //		}
 #undef sha_func_to_use
 	}

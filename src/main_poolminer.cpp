@@ -35,6 +35,7 @@ int collision_table_bits;
 bool use_avxsse4;
 bool use_sphlib;
 size_t thread_num_max;
+size_t internal_thread_num_max;
 static size_t fee_to_pay;
 static size_t miner_id;
 static boost::asio::ip::tcp::socket* socket_to_server;
@@ -171,7 +172,6 @@ public:
 		blockHeader_t* thrblock = NULL;
 		blockHeader_t* orgblock = NULL;
 		CProtoshareProcessor processor(shamode, collisionTableBits, _id);
-		CFullHashTable table;
 
 		while (running) {
 			if (orgblock != _bprovider->getOriginalBlock()) {
@@ -187,7 +187,7 @@ public:
 			    struct timeval tv;
 			    gettimeofday(&tv, NULL);
 #endif
-			    processor.protoshares_process((blockHeader_t*)thrblock, (CBlockProvider*)_bprovider, &table);
+			    processor.protoshares_process((blockHeader_t*)thrblock, (CBlockProvider*)_bprovider, internal_thread_num_max);
 #ifdef DEBUG
 			    unsigned int begin_time = (tv.tv_sec * 1000 + tv.tv_usec / 1000);
 			    gettimeofday(&tv, NULL);
@@ -596,6 +596,7 @@ int main(int argc, char **argv)
 	// init everything:
 	socket_to_server = NULL;
 	thread_num_max = getArgInt(argc, argv, "-t", 1); // what about boost's hardware_concurrency() ?
+	internal_thread_num_max = getArgInt(argc, argv, "-i", 1); // what about boost's hardware_concurrency() ?
 	collision_table_bits = getArgInt(argc, argv, "-m", 27);
 	fee_to_pay = 0; //GetArg("-poolfee", 3);
 	miner_id = 0; //GetArg("-minerid", 0);
@@ -674,7 +675,8 @@ int main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
-	if (thread_num_max == 0 || thread_num_max > MAX_THREADS)
+	int total_threads = thread_num_max * internal_thread_num_max;
+	if (total_threads <= 0 || total_threads > MAX_THREADS)
 	{
 		std::cerr << "usage: " << "current maximum supported number of threads = " << MAX_THREADS << std::endl;
 		return EXIT_FAILURE;
