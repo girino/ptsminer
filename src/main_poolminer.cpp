@@ -150,7 +150,6 @@ public:
   virtual boost::shared_mutex& get_working_lock() = 0;
 };
 
-
 class CWorkerThread { // worker=miner
 public:
 
@@ -183,11 +182,12 @@ public:
 				++blockcnt;
 			}
 			if (thrblock != NULL) {
+#ifdef DEBUG
 			    struct timeval tv;
 			    gettimeofday(&tv, NULL);
-
-		    	processor.protoshares_process((blockHeader_t*)thrblock, (CBlockProvider*)_bprovider);
-
+#endif
+			    processor.protoshares_process((blockHeader_t*)thrblock, (CBlockProvider*)_bprovider);
+#ifdef DEBUG
 			    unsigned int begin_time = (tv.tv_sec * 1000 + tv.tv_usec / 1000);
 			    gettimeofday(&tv, NULL);
 			    unsigned int end_time = (tv.tv_sec * 1000 + tv.tv_usec / 1000);
@@ -198,7 +198,6 @@ public:
 			    totaltime += elapsed_time;
 			    num_runs++;
 			    double average_time = ((double)totaltime)/((double)num_runs);
-#ifdef DEBUG
 				std::cout << "Time Elapsed thread " << _id << ": "
 						<< elapsed_time << " (min: " << mintime << " avg: "
 						<< average_time <<")" << std::endl;
