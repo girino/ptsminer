@@ -171,6 +171,7 @@ public:
 		blockHeader_t* thrblock = NULL;
 		blockHeader_t* orgblock = NULL;
 		CProtoshareProcessor processor(shamode, collisionTableBits, _id);
+		CFullHashTable table;
 
 		while (running) {
 			if (orgblock != _bprovider->getOriginalBlock()) {
@@ -186,7 +187,7 @@ public:
 			    struct timeval tv;
 			    gettimeofday(&tv, NULL);
 #endif
-			    processor.protoshares_process((blockHeader_t*)thrblock, (CBlockProvider*)_bprovider);
+			    processor.protoshares_process((blockHeader_t*)thrblock, (CBlockProvider*)_bprovider, &table);
 #ifdef DEBUG
 			    unsigned int begin_time = (tv.tv_sec * 1000 + tv.tv_usec / 1000);
 			    gettimeofday(&tv, NULL);

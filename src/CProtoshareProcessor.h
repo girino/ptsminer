@@ -33,13 +33,12 @@ public:
 			unsigned int _collisionTableBits,
 			unsigned int _thread_id);
 	virtual ~CProtoshareProcessor();
-	virtual void protoshares_process(blockHeader_t* block,  CBlockProvider* bp);
+	virtual void protoshares_process(blockHeader_t* block,  CBlockProvider* bp, CFullHashTable *htable);
 
 	//uint32_t *collisionIndices;
 	unsigned int collisionTableBits;
 	unsigned int thread_id;
 	SHAMODE shamode;
-	CFullHashTable *htable;
 };
 
 template<int COLLISION_TABLE_SIZE>

@@ -762,6 +762,7 @@ CFullHashTable::CFullHashTable() {
 	keys = (uint64_t*)malloc(sizeof(uint64_t)*FHT_SIZE);
 	clear();
 }
+
 void CFullHashTable::clear() {
 	memset(values, 0x00, sizeof(uint32_t)*FHT_SIZE);
 	memset(keys, 0x00, sizeof(uint64_t)*FHT_SIZE);
@@ -902,17 +903,17 @@ CProtoshareProcessor::CProtoshareProcessor(SHAMODE _shamode,
 
 	// allocate collision table
 	//collisionIndices = (uint32_t*)malloc(sizeof(uint32_t)*(1<<collisionTableBits));
-	htable = new CFullHashTable();
+//	htable = new CFullHashTable();
 }
 
 CProtoshareProcessor::~CProtoshareProcessor() {
 //	delete collisionIndices;
-	delete htable;
+//	delete htable;
 }
 
 
 void CProtoshareProcessor::protoshares_process(blockHeader_t* block,
-		CBlockProvider* bp) {
+		CBlockProvider* bp, CFullHashTable* htable) {
 	htable->clear();
 #define process_func _protoshares_process_V6
 	if (shamode == AVXSSE4) {
