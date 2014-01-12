@@ -118,7 +118,7 @@ xCOMPILEFLAGS=-pthread $(DEFS) $(HARDENING) $(CXXFLAGS)
 xLDFLAGS=$(LDHARDENING) $(LDFLAGS)
 
 LIBS+= -L/opt/AMD_SDK/lib/x86_64 -lOpenCL
-INCLUDEPATHS+= -I/opt/AMD_SDK/include
+xCOMPILEFLAGS+= -I/opt/AMD_SDK/include
 
 OBJS= \
 	obj/cpuid.o \
