@@ -125,6 +125,11 @@ OBJS= \
 	obj/sph_sha2.o \
 	obj/sph_sha2big.o \
 	obj/CProtoshareProcessor.o \
+	obj/AbstractMomentum.o \
+	obj/OpenCLMomentum2.o \
+	obj/OpenCLObjects.o \
+	obj/sha_utils.o \
+	obj/fileutils.o \
 	obj/sha2.o \
 	obj/main_poolminer.o
 
