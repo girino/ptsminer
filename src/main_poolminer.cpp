@@ -576,6 +576,7 @@ void print_help(const char* _exec) {
 	std::cerr << "\t\tavx --> use AVX (Intel optimized)" << std::endl;
 	std::cerr << "\t\tsse4 --> use SSE4 (Intel optimized)" << std::endl;
 	std::cerr << "\t\tsph --> use SPHLIB" << std::endl;
+	std::cerr << "\t\tgpu --> use GPU (remember to use a single thread)" << std::endl;
 	std::cerr << std::endl;
 	std::cerr << "example:" << std::endl;
 	std::cerr << "> " << _exec << " -u PkyeQNn1yGV5psGeZ4sDu6nz2vWHTujf4h -t 4 -m 25 -a sse4" << std::endl;
