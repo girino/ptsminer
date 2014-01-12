@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<?fileVersion 4.0.0?>
-
-<cproject storage_type_id="org.eclipse.cdt.core.XmlProjectDescriptionStorage">
+<?fileVersion 4.0.0?><cproject storage_type_id="org.eclipse.cdt.core.XmlProjectDescriptionStorage">
 	<storageModule moduleId="org.eclipse.cdt.core.settings">
 		<cconfiguration id="cdt.managedbuild.toolchain.gnu.base.857654220">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="cdt.managedbuild.toolchain.gnu.base.857654220" moduleId="org.eclipse.cdt.core.settings" name="Default">
@@ -16,17 +14,46 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration buildProperties="" id="cdt.managedbuild.toolchain.gnu.base.857654220" name="Default" parent="org.eclipse.cdt.build.core.emptycfg">
+				<configuration buildProperties="" description="" id="cdt.managedbuild.toolchain.gnu.base.857654220" name="Default" parent="org.eclipse.cdt.build.core.emptycfg">
 					<folderInfo id="cdt.managedbuild.toolchain.gnu.base.857654220.532446591" name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.base.1416619834" name="cdt.managedbuild.toolchain.gnu.base" superClass="cdt.managedbuild.toolchain.gnu.base">
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="cdt.managedbuild.target.gnu.platform.base.1105264601" name="Debug Platform" osList="linux,hpux,aix,qnx" superClass="cdt.managedbuild.target.gnu.platform.base"/>
-							<builder id="cdt.managedbuild.target.gnu.builder.base.73794399" managedBuildOn="false" name="Gnu Make Builder.Default" superClass="cdt.managedbuild.target.gnu.builder.base"/>
+							<builder id="cdt.managedbuild.target.gnu.builder.base.73794399" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" superClass="cdt.managedbuild.target.gnu.builder.base"/>
 							<tool id="cdt.managedbuild.tool.gnu.archiver.base.1236049186" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.base"/>
-							<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.826583095" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base"/>
-							<tool id="cdt.managedbuild.tool.gnu.c.compiler.base.1897781337" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.base"/>
+							<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.826583095" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base">
+								<option id="gnu.cpp.compiler.option.include.paths.390150673" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
+									<listOptionValue builtIn="false" value="/Applications/Xcode.app/Contents//Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk/usr/include/"/>
+									<listOptionValue builtIn="false" value="/Applications/Xcode.app/Contents//Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/c++/v1/"/>
+									<listOptionValue builtIn="false" value="/opt/local/include"/>
+									<listOptionValue builtIn="false" value="/opt/OpenCL"/>
+								</option>
+								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.985009179" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+							</tool>
+							<tool id="cdt.managedbuild.tool.gnu.c.compiler.base.1897781337" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.base">
+								<option id="gnu.c.compiler.option.include.paths.573928185" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
+									<listOptionValue builtIn="false" value="/Applications/Xcode.app/Contents//Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk/usr/include/"/>
+									<listOptionValue builtIn="false" value="/Applications/Xcode.app/Contents//Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/c++/v1/"/>
+									<listOptionValue builtIn="false" value="/opt/local/include"/>
+									<listOptionValue builtIn="false" value="/opt/OpenCL"/>
+								</option>
+								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1323802131" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
+							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.linker.base.1469317737" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.base"/>
-							<tool id="cdt.managedbuild.tool.gnu.cpp.linker.base.1304990" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.base"/>
-							<tool id="cdt.managedbuild.tool.gnu.assembler.base.165622131" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.base"/>
+							<tool id="cdt.managedbuild.tool.gnu.cpp.linker.base.1304990" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.base">
+								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1515768313" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
+									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
+									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
+								</inputType>
+							</tool>
+							<tool id="cdt.managedbuild.tool.gnu.assembler.base.165622131" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.base">
+								<option id="gnu.both.asm.option.include.paths.318561103" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
+									<listOptionValue builtIn="false" value="/Applications/Xcode.app/Contents//Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/c++/v1/"/>
+									<listOptionValue builtIn="false" value="/opt/local/include"/>
+									<listOptionValue builtIn="false" value="/tmp/inc"/>
+									<listOptionValue builtIn="false" value="/opt/OpenCL"/>
+								</option>
+								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.699882180" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
+							</tool>
 						</toolChain>
 					</folderInfo>
 				</configuration>
@@ -39,5 +66,30 @@
 	</storageModule>
 	<storageModule moduleId="scannerConfiguration">
 		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.base.857654220;cdt.managedbuild.toolchain.gnu.base.857654220.532446591;cdt.managedbuild.tool.gnu.cpp.compiler.macosx.base.370330068;cdt.managedbuild.tool.gnu.cpp.compiler.input.1434358424">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.base.857654220;cdt.managedbuild.toolchain.gnu.base.857654220.532446591;cdt.managedbuild.tool.gnu.cpp.compiler.macosx.base.1640798501;cdt.managedbuild.tool.gnu.cpp.compiler.input.1996231215">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.base.857654220;cdt.managedbuild.toolchain.gnu.base.857654220.532446591;cdt.managedbuild.tool.gnu.c.compiler.macosx.base.796558763;cdt.managedbuild.tool.gnu.c.compiler.input.1203912871">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.base.857654220;cdt.managedbuild.toolchain.gnu.base.857654220.532446591;cdt.managedbuild.tool.gnu.cpp.compiler.base.1635510588;cdt.managedbuild.tool.gnu.cpp.compiler.input.1268452417">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.base.857654220;cdt.managedbuild.toolchain.gnu.base.857654220.532446591;cdt.managedbuild.tool.gnu.c.compiler.base.1897781337;cdt.managedbuild.tool.gnu.c.compiler.input.1323802131">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.base.857654220;cdt.managedbuild.toolchain.gnu.base.857654220.532446591;cdt.managedbuild.tool.gnu.cpp.compiler.base.826583095;cdt.managedbuild.tool.gnu.cpp.compiler.input.985009179">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.base.857654220;cdt.managedbuild.toolchain.gnu.base.857654220.532446591;cdt.managedbuild.tool.gnu.c.compiler.macosx.base.1911620243;cdt.managedbuild.tool.gnu.c.compiler.input.1057832319">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.base.857654220;cdt.managedbuild.toolchain.gnu.base.857654220.532446591;cdt.managedbuild.tool.gnu.c.compiler.base.1230337839;cdt.managedbuild.tool.gnu.c.compiler.input.729074276">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
 	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 </cproject>

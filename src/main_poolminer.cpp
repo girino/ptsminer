@@ -34,6 +34,7 @@
 int collision_table_bits;
 bool use_avxsse4;
 bool use_sphlib;
+bool use_gpu;
 size_t thread_num_max;
 static size_t fee_to_pay;
 static size_t miner_id;
@@ -171,7 +172,11 @@ public:
 		unsigned int blockcnt = 0;
 		blockHeader_t* thrblock = NULL;
 		blockHeader_t* orgblock = NULL;
-		CProtoshareProcessor processor(shamode, collisionTableBits, _id);
+		CProtoshareProcessor * processor;
+		if (shamode != GPU)
+			processor = new CProtoshareProcessor(shamode, collisionTableBits, _id);
+		else
+			processor = new CProtoshareProcessorGPU(shamode, collisionTableBits, _id);
 
 		while (running) {
 			if (orgblock != _bprovider->getOriginalBlock()) {
@@ -186,7 +191,7 @@ public:
 			    struct timeval tv;
 			    gettimeofday(&tv, NULL);
 
-		    	processor.protoshares_process((blockHeader_t*)thrblock, (CBlockProvider*)_bprovider);
+		    	processor->protoshares_process((blockHeader_t*)thrblock, (CBlockProvider*)_bprovider);
 
 			    unsigned int begin_time = (tv.tv_sec * 1000 + tv.tv_usec / 1000);
 			    gettimeofday(&tv, NULL);
@@ -228,7 +233,9 @@ public:
 		_master->wait_for_master();
 		std::cout << "[WORKER" << _id << "] GoGoGo!" << std::endl;
 		boost::this_thread::sleep(boost::posix_time::seconds(1));
-		if (use_avxsse4)
+		if (use_gpu)
+			mineloop_start(GPU, collision_table_bits); // <-- work loop
+		else if (use_avxsse4)
 			mineloop_start(AVXSSE4, collision_table_bits); // <-- work loop
 		else if (use_sphlib)
 			mineloop_start(SPHLIB, collision_table_bits); // ^
@@ -626,6 +633,10 @@ int main(int argc, char **argv)
 	} else if (mode_param == "fips") {
 		std::cout << "using FIPS 180-2" << std::endl;
 		use_sphlib = false;
+	} else if (mode_param == "gpu") {
+		std::cout << "using GPU" << std::endl;
+		use_gpu = true;
+		use_sphlib = true;
 	} else {
 #ifdef	__x86_64__
 		std::cout << "**" << "SSE4/AVX auto-detection" << std::endl;

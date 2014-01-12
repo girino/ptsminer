@@ -63,6 +63,11 @@ OBJS= \
 	obj/sph_sha2.o \
 	obj/sph_sha2big.o \
 	obj/CProtoshareProcessor.o \
+	obj/AbstractMomentum.o \
+	obj/OpenCLMomentum2.o \
+	obj/OpenCLObjects.o \
+	obj/sha_utils.o \
+	obj/fileutils.o \
 	obj/sha2.o \
 	obj/main_poolminer.o
 
@@ -81,7 +86,7 @@ obj/%.o: intel/%.asm
 	yasm -D__APPLE__ -f macho64 -o $@ $<
 
 ptsminer: $(OBJS:obj/%=obj/%)
-	$(CXX) $(xLDFLAGS) -o $@ $(LIBPATHS) $^ $(LIBS)
+	$(CXX) $(xLDFLAGS) -o $@ $(LIBPATHS) $^ $(LIBS) -framework OpenCL
 
 clean:
 	rm -f ptsminer

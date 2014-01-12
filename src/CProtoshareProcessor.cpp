@@ -6,9 +6,8 @@
  */
 
 #include "CProtoshareProcessor.h"
-#include "sha2.h"
-#include "sph_sha2.h"
-#include "sha512.h"
+#include "sha_utils.h"
+#include "OpenCLMomentum2.h"
 
 #define repeat2(x) {x} {x}
 #define repeat4(x) repeat2(x) repeat2(x)
@@ -27,10 +26,18 @@ bool protoshares_revalidateCollision(blockHeader_t* block, uint8_t* midHash, uin
         //        printf("indexB out of range\n");
         //if( indexA == indexB )
         //        printf("indexA == indexB");
+
+
         uint8_t tempHash[32+4];
         uint64_t resultHash[8];
         memcpy(tempHash+4, midHash, 32);
-		uint64_t birthdayA;//, birthdayB;
+		if (birthdayB == 0) {
+			*(uint32_t*)tempHash = indexB&~7;
+			sha512_func(tempHash, 32+4, (unsigned char*)resultHash);
+			birthdayB = resultHash[indexB&7] >> (64ULL-SEARCH_SPACE_BITS);
+		}
+
+        uint64_t birthdayA;//, birthdayB;
 		*(uint32_t*)tempHash = indexA_orig&~7;
 		sha512_func(tempHash, 32+4, (unsigned char*)resultHash);
 		uint32_t indexA = indexA_orig;
@@ -684,29 +691,6 @@ void _protoshares_process_V5(blockHeader_t* block,  CBlockProvider* bp,
 }
 
 
-void sha512_func_avx(unsigned char* in, unsigned int size, unsigned char* out) {
-	//AVX/SSE
-	SHA512_Context c512_avxsse; //AVX/SSE
-	SHA512_Init(&c512_avxsse);
-	SHA512_Update_Special(&c512_avxsse, in, size);
-	SHA512_Final(&c512_avxsse, (unsigned char*)out);
-}
-
-void sha512_func_sph(unsigned char* in, unsigned int size, unsigned char* out) {
-	//SPH
-	sph_sha512_context c512_sph; //SPH
-	sph_sha512_init(&c512_sph);
-	sph_sha512(&c512_sph, in, size);
-	sph_sha512_close(&c512_sph, out);
-}
-
-void sha512_func_fips(unsigned char* in, unsigned int size, unsigned char* out) {
-	sha512_ctx c512_yp; //SPH
-	sha512_init(&c512_yp);
-	sha512_update_final(&c512_yp, in, size, out);
-}
-
-
 void sha512_func_debug(unsigned char* in, unsigned int size, unsigned char* out) {
 
 	sha512_func_avx(in, size, out);
@@ -724,6 +708,10 @@ void sha512_func_debug(unsigned char* in, unsigned int size, unsigned char* out)
 			printf("ERROR: %llX != %llX\n", resultHash[i], resultHash2[i]);
 		}
 	}
+}
+
+CProtoshareProcessor::CProtoshareProcessor() {
+	;
 }
 
 CProtoshareProcessor::CProtoshareProcessor(SHAMODE _shamode,
@@ -795,3 +783,44 @@ void CProtoshareProcessor::protoshares_process(blockHeader_t* block,
 	}
 }
 
+CProtoshareProcessorGPU::CProtoshareProcessorGPU(SHAMODE _shamode,
+		unsigned int _collisionTableBits, unsigned int _thread_id) {
+	M1 = new OpenCLMomentum2(_collisionTableBits);
+	this->collisionTableBits = _collisionTableBits;
+	this->shamode = _shamode;
+	this->thread_id = _thread_id;
+}
+
+CProtoshareProcessorGPU::~CProtoshareProcessorGPU() {
+	delete M1;
+}
+
+void CProtoshareProcessorGPU::protoshares_process(blockHeader_t* block,
+		CBlockProvider* bp) {
+	uint32_t col1[20];
+	uint32_t col2[20];
+	size_t count_collisions = 0;
+
+    // generate mid hash using sha256 (header hash)
+	blockHeader_t* ob = bp->getOriginalBlock();
+    uint8_t midHash[32];
+
+	{
+		//SPH
+		sph_sha256_context c256;
+		sph_sha256_init(&c256);
+		sph_sha256(&c256, (unsigned char*)block, 80);
+		sph_sha256_close(&c256, midHash);
+		sph_sha256_init(&c256);
+		sph_sha256(&c256, (unsigned char*)midHash, 32);
+		sph_sha256_close(&c256, midHash);
+	}
+
+
+
+	M1->find_collisions(midHash, col1, col2, &count_collisions);
+	for (int i = 0; i < count_collisions; i++) {
+		protoshares_revalidateCollision(block, midHash, col1[i], col2[i], 0, bp, sha512_func_sph, thread_id);
+	}
+
+}
