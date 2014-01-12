@@ -88,17 +88,19 @@ void print_err_msg(cl_int err_code) {
 	}
 }
 
-void check_error(cl_int err_code) {
-	if (err_code != CL_SUCCESS) {
-		print_err_msg(err_code);
-		assert(err_code == CL_SUCCESS);
-	}
-}
+#define check_error(x) {cl_int _MY_ERR_X = x; if (_MY_ERR_X != CL_SUCCESS) print_err_msg(_MY_ERR_X); assert(_MY_ERR_X == CL_SUCCESS);}
+
+//void check_error(cl_int err_code) {
+//	if (err_code != CL_SUCCESS) {
+//		print_err_msg(err_code);
+//		assert(err_code == CL_SUCCESS);
+//	}
+//}
 
 void error_callback_func (const char *errinfo,
                     const void *private_info, size_t cb,
                     void *user_data) {
-	std::cerr << "ERROR (callback): " << errinfo << std::endl;
+	//std::cerr << "ERROR (callback): " << errinfo << std::endl;
 }
 
 OpenCLPlatform::OpenCLPlatform(cl_platform_id id, cl_device_type device_type) {

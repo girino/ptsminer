@@ -12,12 +12,13 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include "global.h"
 
 class AbstractMomentum {
 public:
 	AbstractMomentum();
 	virtual ~AbstractMomentum();
-	virtual void find_collisions(uint8_t* message, uint32_t* collisions1, uint32_t* collisions2, size_t * collision_count) = 0;
+	virtual void find_collisions(uint8_t* message, collision_struct* collisions, size_t * collision_count) = 0;
 };
 
 

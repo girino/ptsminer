@@ -42,6 +42,7 @@ private:
 	unsigned int thread_id;
 	SHAMODE shamode;
 	AbstractMomentum * M1;
+	collision_struct * collisions;
 };
 
 #endif /* CPROTOSHAREPOOCESSOR_H_ */

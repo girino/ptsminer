@@ -1,13 +1,13 @@
 //
-//  OpenCLMomentum2.h
+//  OpenCLMomentumV3.h
 //  momentumCL
 //
 //  Created by Girino Vey on 02/01/14.
 //
 //
 
-#ifndef __momentumCL__OpenCLMomentum2__
-#define __momentumCL__OpenCLMomentum2__
+#ifndef __momentumCL__OpenCLMomentumV3__
+#define __momentumCL__OpenCLMomentumV3__
 
 #include <iostream>
 #include "fileutils.h"
@@ -20,10 +20,12 @@
 #include "OpenCLObjects.h"
 #include "AbstractMomentum.h"
 
-class OpenCLMomentum2: public AbstractMomentum {
+#define COLLISION_BUFFER_SIZE (1<<16)
+
+class OpenCLMomentumV3: public AbstractMomentum {
 public:
-	OpenCLMomentum2(int _HASH_BITS);
-	virtual ~OpenCLMomentum2();
+	OpenCLMomentumV3(int _HASH_BITS);
+	virtual ~OpenCLMomentumV3();
 	virtual void find_collisions(uint8_t* message, collision_struct* collisions, size_t* collision_count);
 private:
 	size_t max_threads;
@@ -40,4 +42,4 @@ private:
 
 };
 
-#endif /* defined(__momentumCL__OpenCLMomentum2__) */
+#endif /* defined(__momentumCL__OpenCLMomentumV3__) */

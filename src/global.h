@@ -17,5 +17,11 @@
 #define COLLISION_KEY_MASK 0xFF800000UL
 #define HASH_TABLE_SIZE (1<<26) // start with the bit one ;)
 
+typedef struct _collision_struct {
+	uint64_t birthday;
+	uint32_t nonce_a;
+	uint32_t nonce_b;
+} collision_struct;
+
 
 #endif /* GLOBAL_H_ */

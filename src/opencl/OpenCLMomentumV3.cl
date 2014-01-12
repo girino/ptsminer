@@ -9,6 +9,12 @@ typedef struct _collision_struct {
 	uint32_t nonce_b;
 } collision_struct;
 
+kernel void kernel_clean_hash_table(global uint32_t * hash_table) {
+	size_t id = get_local_id(0);
+	size_t gid = get_group_id(0) * get_local_size(0);
+	hash_table[id + gid] = 0;
+}
+
 kernel void kernel_sha512(global char * message,
                           global uint32_t * hash_table,
                           uint32_t HASH_TABLE_SIZE,
@@ -40,23 +46,10 @@ kernel void kernel_sha512(global char * message,
 			// collision candidate
 			unsigned int nonceA = (hash_table[birthday]&~COLLISION_KEY_MASK)<<3;
 			if (nonceA != nonce) {
-				uint64_t hashA[8];
-			    init_ctx(&sctx);
-			    *((uint32_t*)tempHash) = nonceA;
-			    ctx_update(&sctx, tempHash, 36);
-			    uint64_t hash[8];
-			    sha512_digest(&sctx, hashA);
-				#pragma unroll
-				for (int j = 0; j < 8; j++) {
-					unsigned long birthdayA = GET_BIRTHDAY(hashA[j]);
-					if (birthdayB == birthdayA) {
-						uint32_t pos = atomic_inc(collision_count);
-						collisions[pos].nonce_a = (gid*8) + (id*8)+ i;
-						collisions[pos].nonce_b = nonceA+j;
-						collisions[pos].birthday = birthdayB;
-						//collisions[(gid*8) + (id*8)+ i] = nonceA+j;
-					}
-				}
+				uint32_t pos = atomic_inc(collision_count);
+				collisions[pos].nonce_b = (gid*8) + (id*8)+ i;
+				collisions[pos].nonce_a = nonceA;
+				collisions[pos].birthday = birthdayB;
 			}
 		}
 		hash_table[birthday] = (nonce>>3) | collisionKey; // we have 6 bits available for validation

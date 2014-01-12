@@ -7,7 +7,9 @@
 
 #include "CProtoshareProcessor.h"
 #include "sha_utils.h"
+#include "OpenCLMomentumV3.h"
 #include "OpenCLMomentum2.h"
+#include "global.h"
 
 #define repeat2(x) {x} {x}
 #define repeat4(x) repeat2(x) repeat2(x)
@@ -120,7 +122,6 @@ bool protoshares_revalidateCollision(blockHeader_t* block, uint8_t* midHash, uin
 }
 
 #define CACHED_HASHES         (32)
-#define COLLISION_KEY_MASK 0xFF800000
 
 template<int COLLISION_TABLE_SIZE, sha512_func_t SHA512_FUNC>
 void _protoshares_process_V2(blockHeader_t* block,  CBlockProvider* bp,
@@ -785,20 +786,25 @@ void CProtoshareProcessor::protoshares_process(blockHeader_t* block,
 
 CProtoshareProcessorGPU::CProtoshareProcessorGPU(SHAMODE _shamode,
 		unsigned int _collisionTableBits, unsigned int _thread_id) {
+#ifdef DEBUG_GPUV3
+	M1 = new OpenCLMomentumV3(_collisionTableBits);
+#else
 	M1 = new OpenCLMomentum2(_collisionTableBits);
+#endif
 	this->collisionTableBits = _collisionTableBits;
 	this->shamode = _shamode;
 	this->thread_id = _thread_id;
+	this->collisions = new collision_struct[COLLISION_BUFFER_SIZE];
 }
 
 CProtoshareProcessorGPU::~CProtoshareProcessorGPU() {
 	delete M1;
+	delete collisions;
 }
 
 void CProtoshareProcessorGPU::protoshares_process(blockHeader_t* block,
 		CBlockProvider* bp) {
-	uint32_t col1[20];
-	uint32_t col2[20];
+
 	size_t count_collisions = 0;
 
     // generate mid hash using sha256 (header hash)
@@ -816,11 +822,11 @@ void CProtoshareProcessorGPU::protoshares_process(blockHeader_t* block,
 		sph_sha256_close(&c256, midHash);
 	}
 
+	M1->find_collisions(midHash, collisions, &count_collisions);
 
-
-	M1->find_collisions(midHash, col1, col2, &count_collisions);
 	for (int i = 0; i < count_collisions; i++) {
-		protoshares_revalidateCollision(block, midHash, col1[i], col2[i], 0, bp, sha512_func_sph, thread_id);
+		protoshares_revalidateCollision(block, midHash, collisions[i].nonce_a, collisions[i].nonce_b, collisions[i].birthday, bp, sha512_func_sph, thread_id);
 	}
+	//printf("DEBUG: collisions = %d\n", count_collisions);
 
 }
