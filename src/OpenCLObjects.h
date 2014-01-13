@@ -127,6 +127,7 @@ public:
 	virtual ~OpenCLPlatform();
 
 	OpenCLDevice* getDevice(int pos);
+	int getNumDevices();
 	OpenCLContext* getContext();
 private:
 	std::vector<OpenCLDevice *> devices;

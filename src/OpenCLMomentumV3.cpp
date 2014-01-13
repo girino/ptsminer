@@ -19,13 +19,20 @@
 #include "global.h"
 #include "sha_utils.h"
 
-OpenCLMomentumV3::OpenCLMomentumV3(int _HASH_BITS) {
+OpenCLMomentumV3::OpenCLMomentumV3(int _HASH_BITS, int _device_num) {
 	max_threads = 1<<30; // very big
 	HASH_BITS = _HASH_BITS;
+	device_num = _device_num;
+
+	// checks if device exists
+	if (main.getPlatform(0)->getNumDevices() <= device_num) {
+		printf("ERROR: DEVICE %d does not exist. Please limit your threads to one per device.\n", device_num);
+		assert(false);
+	}
 
 	// compiles
-	fprintf(stdout, "Device: %s\n", main.getPlatform(0)->getDevice(0)->getName().c_str());
-	cl_ulong maxWorkGroupSize = main.getPlatform(0)->getDevice(0)->getMaxWorkGroupSize();
+	fprintf(stdout, "Device: %s\n", main.getPlatform(0)->getDevice(device_num)->getName().c_str());
+	cl_ulong maxWorkGroupSize = main.getPlatform(0)->getDevice(device_num)->getMaxWorkGroupSize();
 	fprintf(stdout, "Max work group size: %llu\n", maxWorkGroupSize);
 
 	if (maxWorkGroupSize < max_threads) max_threads = maxWorkGroupSize;
@@ -42,7 +49,7 @@ OpenCLMomentumV3::OpenCLMomentumV3(int _HASH_BITS) {
 	OpenCLKernel *kernel_cleanup = program->getKernel("kernel_clean_hash_table");
 
 	// only one queue, helps with memory leaking
-	queue = context->createCommandQueue(0);
+	queue = context->createCommandQueue(device_num);
 
 	size_t BLOCKSIZE = max_threads;
 	// allocate internal structure
@@ -77,8 +84,8 @@ void OpenCLMomentumV3::find_collisions(uint8_t* message, collision_struct* colli
 	assert(kernel != NULL);
 
 	//size_t BLOCKSIZE = main.getPlatform(0)->getDevice(0)->getMaxWorkGroupSize();
-	size_t BLOCKSIZE = kernel->getWorkGroupSize(main.getPlatform(0)->getDevice(0));
-	size_t BLOCKSIZE_CLEAN = kernel_cleanup->getWorkGroupSize(main.getPlatform(0)->getDevice(0));
+	size_t BLOCKSIZE = kernel->getWorkGroupSize(main.getPlatform(0)->getDevice(device_num));
+	size_t BLOCKSIZE_CLEAN = kernel_cleanup->getWorkGroupSize(main.getPlatform(0)->getDevice(device_num));
 
 	//printf("BLOCKSIZE = %lld\n", BLOCKSIZE);
 
@@ -96,7 +103,7 @@ void OpenCLMomentumV3::find_collisions(uint8_t* message, collision_struct* colli
 	kernel->addGlobalArg(temp_collisions_count);
 
 	cl_event eventw1 = queue->enqueueWriteBuffer(cl_message, message, sizeof(uint8_t)*32, &eventkc, 1);
-	cl_event eventw2 = queue->enqueueWriteBuffer(temp_collisions_count, collision_count, sizeof(size_t), &eventw1, 1);
+	cl_event eventw2 = queue->enqueueWriteBuffer(temp_collisions_count, collision_count, sizeof(size_t), &eventkc, 1);
 
 //	cl_event eventk = queue->enqueueKernel1D(kernel, MAX_MOMENTUM_NONCE, worksize, &eventw, 1);
 	cl_event eventk = queue->enqueueKernel1D(kernel, MAX_MOMENTUM_NONCE/8, BLOCKSIZE, &eventw2, 1);

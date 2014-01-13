@@ -141,6 +141,10 @@ OpenCLDevice* OpenCLPlatform::getDevice(int pos) {
 	return devices[pos];
 }
 
+int OpenCLPlatform::getNumDevices() {
+	return devices.size();
+}
+
 
 OpenCLMain::OpenCLMain() {
 	// lazy instantiation, inits with NULL

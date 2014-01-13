@@ -24,7 +24,7 @@
 
 class OpenCLMomentumV3: public AbstractMomentum {
 public:
-	OpenCLMomentumV3(int _HASH_BITS);
+	OpenCLMomentumV3(int _HASH_BITS, int device_num);
 	virtual ~OpenCLMomentumV3();
 	virtual void find_collisions(uint8_t* message, collision_struct* collisions, size_t* collision_count);
 private:
@@ -42,6 +42,7 @@ private:
 
 	// semi-constants
 	int HASH_BITS;
+	int device_num;
 
 };
 
