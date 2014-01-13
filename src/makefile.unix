@@ -148,7 +148,7 @@ obj/%.o: intel/%.asm
 	yasm -f $(YASMOUTPUT) -o $@ $<
 
 ptsminer: $(OBJS:obj/%=obj/%)
-	$(CXX) $(xLDFLAGS) -o $@ $(LIBPATHS) $^ $(LIBS)
+	$(CXX) $(xLDFLAGS) -o $@ $(LIBPATHS) $^ $(LIBS) -lOpenCL
 
 clean:
 	rm -f ptsminer
