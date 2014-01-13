@@ -100,7 +100,7 @@ void print_err_msg(cl_int err_code) {
 void error_callback_func (const char *errinfo,
                     const void *private_info, size_t cb,
                     void *user_data) {
-	//std::cerr << "ERROR (callback): " << errinfo << std::endl;
+	std::cerr << "ERROR (callback): " << errinfo << std::endl;
 }
 
 OpenCLPlatform::OpenCLPlatform(cl_platform_id id, cl_device_type device_type) {

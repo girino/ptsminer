@@ -31,10 +31,11 @@ private:
 	size_t max_threads;
 
 	// cache mem objects between runs
-	OpenCLBuffer* internal_hash_table;
-	OpenCLBuffer* temp_collisions;
-	OpenCLBuffer* temp_collisions_count;
 	OpenCLBuffer* cl_message;
+	OpenCLBuffer* hashes;
+	OpenCLBuffer* hash_table;
+	OpenCLBuffer* collisions;
+	OpenCLBuffer* collisions_count;
 
 	// reuse queue
 	OpenCLCommandQueue *queue;
