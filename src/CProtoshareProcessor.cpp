@@ -787,7 +787,7 @@ void CProtoshareProcessor::protoshares_process(blockHeader_t* block,
 
 CProtoshareProcessorGPU::CProtoshareProcessorGPU(SHAMODE _shamode,
 		unsigned int _collisionTableBits, unsigned int _thread_id) {
-#ifndef DEBUG_GPUV4
+#ifdef DEBUG_GPUV3
 	// one device per thread
 	M1 = new OpenCLMomentumV3(_collisionTableBits, _thread_id);
 #else
