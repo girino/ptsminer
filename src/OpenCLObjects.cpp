@@ -299,12 +299,10 @@ OpenCLContext* OpenCLPlatform::getContext() {
 }
 
 int not_main(int argc, char **argv) {
-	OpenCLMain main;
-
 	std::vector<std::string> files;
 	files.push_back("opencl/cryptsha512_kernel.cl");
 	files.push_back("OpenCLMomentum.cl");
-	main.getPlatform(0)->getContext()->loadProgramFromFiles(files);
+	OpenCLMain::getInstance().getPlatform(0)->getContext()->loadProgramFromFiles(files);
 }
 
 OpenCLKernel* OpenCLProgram::getKernel(std::string name) {

@@ -24,8 +24,10 @@ OpenCLMomentumV3::OpenCLMomentumV3(int _HASH_BITS, int _device_num) {
 	HASH_BITS = _HASH_BITS;
 	device_num = _device_num;
 
+	OpenCLMain& main = OpenCLMain::getInstance();
+
 	// checks if device exists
-	if (main.getPlatform(0)->getNumDevices() <= device_num) {
+	if (main.getInstance().getPlatform(0)->getNumDevices() <= device_num) {
 		printf("ERROR: DEVICE %d does not exist. Please limit your threads to one per device.\n", device_num);
 		assert(false);
 	}
@@ -75,7 +77,7 @@ void OpenCLMomentumV3::find_collisions(uint8_t* message, collision_struct* colli
 	// temp storage
 	*collision_count = 0;
 
-	OpenCLContext *context = main.getPlatform(0)->getContext();
+	OpenCLContext *context = OpenCLMain::getInstance().getPlatform(0)->getContext();
 	OpenCLProgram *program = context->getProgram(0);
 
 	OpenCLKernel *kernel = program->getKernel("kernel_sha512");
@@ -84,8 +86,8 @@ void OpenCLMomentumV3::find_collisions(uint8_t* message, collision_struct* colli
 	assert(kernel != NULL);
 
 	//size_t BLOCKSIZE = main.getPlatform(0)->getDevice(0)->getMaxWorkGroupSize();
-	size_t BLOCKSIZE = kernel->getWorkGroupSize(main.getPlatform(0)->getDevice(device_num));
-	size_t BLOCKSIZE_CLEAN = kernel_cleanup->getWorkGroupSize(main.getPlatform(0)->getDevice(device_num));
+	size_t BLOCKSIZE = kernel->getWorkGroupSize(OpenCLMain::getInstance().getPlatform(0)->getDevice(device_num));
+	size_t BLOCKSIZE_CLEAN = kernel_cleanup->getWorkGroupSize(OpenCLMain::getInstance().getPlatform(0)->getDevice(device_num));
 
 	//printf("BLOCKSIZE = %lld\n", BLOCKSIZE);
 

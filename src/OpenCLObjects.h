@@ -137,11 +137,18 @@ private:
 
 class OpenCLMain {
 public:
-	OpenCLMain();
-	virtual ~OpenCLMain();
-
+	static OpenCLMain& getInstance() {
+        static OpenCLMain instance; // Guaranteed to be destroyed.
+        return instance;
+	}
 	OpenCLPlatform* getPlatform(int pos);
 private:
+	OpenCLMain();
+	virtual ~OpenCLMain();
+	// avoid copies
+	OpenCLMain(OpenCLMain const&);     // Don't Implement
+    void operator=(OpenCLMain const&); // Don't implement
+
 	std::vector<OpenCLPlatform*> platforms;
 };
 

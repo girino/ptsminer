@@ -24,13 +24,13 @@ OpenCLMomentum2::OpenCLMomentum2(int _HASH_BITS) {
 	HASH_BITS = _HASH_BITS;
 
 	// compiles
-	fprintf(stdout, "Device: %s\n", main.getPlatform(0)->getDevice(0)->getName().c_str());
-	cl_ulong maxWorkGroupSize = main.getPlatform(0)->getDevice(0)->getMaxWorkGroupSize();
+	fprintf(stdout, "Device: %s\n", OpenCLMain::getInstance().getPlatform(0)->getDevice(0)->getName().c_str());
+	cl_ulong maxWorkGroupSize = OpenCLMain::getInstance().getPlatform(0)->getDevice(0)->getMaxWorkGroupSize();
 	fprintf(stdout, "Max work group size: %llu\n", maxWorkGroupSize);
 
 	if (maxWorkGroupSize < max_threads) max_threads = maxWorkGroupSize;
 
-	OpenCLContext *context = main.getPlatform(0)->getContext();
+	OpenCLContext *context = OpenCLMain::getInstance().getPlatform(0)->getContext();
 	std::vector<std::string> program_filenames;
 	program_filenames.push_back("opencl/opencl_cryptsha512.h");
 	program_filenames.push_back("opencl/cryptsha512_kernel.cl");
@@ -60,7 +60,7 @@ void OpenCLMomentum2::find_collisions(uint8_t* message, collision_struct* collis
 	// temp storage
 	*collision_count = 0;
 
-	OpenCLContext *context = main.getPlatform(0)->getContext();
+	OpenCLContext *context = OpenCLMain::getInstance().getPlatform(0)->getContext();
 	OpenCLProgram *program = context->getProgram(0);
 
 	OpenCLKernel *kernel = program->getKernel("kernel_sha512");
@@ -68,7 +68,7 @@ void OpenCLMomentum2::find_collisions(uint8_t* message, collision_struct* collis
 	assert(kernel != NULL);
 
 	//size_t BLOCKSIZE = main.getPlatform(0)->getDevice(0)->getMaxWorkGroupSize();
-	size_t BLOCKSIZE = kernel->getWorkGroupSize(main.getPlatform(0)->getDevice(0));
+	size_t BLOCKSIZE = kernel->getWorkGroupSize(OpenCLMain::getInstance().getPlatform(0)->getDevice(0));
 
 	//printf("BLOCKSIZE = %lld\n", BLOCKSIZE);
 

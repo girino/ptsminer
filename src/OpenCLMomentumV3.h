@@ -29,7 +29,6 @@ public:
 	virtual void find_collisions(uint8_t* message, collision_struct* collisions, size_t* collision_count);
 private:
 	size_t max_threads;
-	OpenCLMain main;
 
 	// cache mem objects between runs
 	OpenCLBuffer* internal_hash_table;
