@@ -284,7 +284,8 @@ OpenCLProgram* OpenCLContext::loadProgramFromStrings(std::vector<std::string> fi
 		// uses first device for error messages
 		size_t length;
 		check_error(clGetProgramBuildInfo(program, devices[0]->getDeviceId(), CL_PROGRAM_BUILD_LOG, 0, NULL, &length));
-		char buffer[length];
+		char buffer[length+1];
+		check_error(clGetProgramBuildInfo(program, devices[0]->getDeviceId(), CL_PROGRAM_BUILD_LOG, length, buffer, &length));
 		std::cout<<"--- Build log ---"<<std::endl<<buffer<<std::endl<<"---  End log  ---"<<std::endl;
 		assert(!error);
 	}

@@ -25,7 +25,7 @@ kernel void calculate_all_hashes(constant char * message,
 	uint32_t nonce = (id*8);
 	char tempHash[36];
 
-	#pragma unroll (32)
+	#pragma unroll
 	for (int i = 0; i < 32; i++) tempHash[i+4] = message[i];
 	*((uint32_t*)tempHash) = nonce;
 
@@ -91,7 +91,7 @@ kernel void kernel_sha512(global char * message,
 	uint32_t nonce = (id*8);
 	char tempHash[36];
 
-	#pragma unroll (32)
+	#pragma unroll
 	for (int i = 0; i < 32; i++) tempHash[i+4] = message[i];
 	*((uint32_t*)tempHash) = nonce;
 	
@@ -102,7 +102,7 @@ kernel void kernel_sha512(global char * message,
     sha512_digest(&sctx, hash);
     
     // pra cada hash
-	#pragma unroll (8)
+	#pragma unroll
     for (int i = 0; i < 8; i++) {
 	    // checks in the hash table
 		unsigned long birthdayB = GET_BIRTHDAY(hash[i]);
