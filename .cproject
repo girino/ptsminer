@@ -27,6 +27,9 @@
 									<listOptionValue builtIn="false" value="/opt/local/include"/>
 									<listOptionValue builtIn="false" value="/opt/OpenCL"/>
 								</option>
+								<option id="gnu.cpp.compiler.option.preprocessor.def.83271242" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="_ECLIPSE_OPENCL_HEADER"/>
+								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.985009179" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.base.1897781337" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.base">
@@ -35,6 +38,9 @@
 									<listOptionValue builtIn="false" value="/Applications/Xcode.app/Contents//Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/c++/v1/"/>
 									<listOptionValue builtIn="false" value="/opt/local/include"/>
 									<listOptionValue builtIn="false" value="/opt/OpenCL"/>
+								</option>
+								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1506913792" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="_ECLIPSE_OPENCL_HEADER"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1323802131" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>

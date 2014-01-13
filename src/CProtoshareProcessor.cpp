@@ -8,6 +8,7 @@
 #include "CProtoshareProcessor.h"
 #include "sha_utils.h"
 #include "OpenCLMomentumV3.h"
+#include "OpenCLMomentumV4.h"
 #include "OpenCLMomentum2.h"
 #include "global.h"
 
@@ -786,11 +787,11 @@ void CProtoshareProcessor::protoshares_process(blockHeader_t* block,
 
 CProtoshareProcessorGPU::CProtoshareProcessorGPU(SHAMODE _shamode,
 		unsigned int _collisionTableBits, unsigned int _thread_id) {
-#ifndef DEBUG_GPUV2
+#ifndef DEBUG_GPUV4
 	// one device per thread
 	M1 = new OpenCLMomentumV3(_collisionTableBits, _thread_id);
 #else
-	M1 = new OpenCLMomentum2(_collisionTableBits);
+	M1 = new OpenCLMomentumV4(_collisionTableBits, _thread_id);
 #endif
 	this->collisionTableBits = _collisionTableBits;
 	this->shamode = _shamode;

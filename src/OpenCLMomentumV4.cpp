@@ -1,12 +1,12 @@
 //
-//  OpenCLMomentumV3.cpp
+//  OpenCLMomentumV4.cpp
 //  momentumCL
 //
 //  Created by Girino Vey on 02/01/14.
 //
 //
 
-#include "OpenCLMomentumV3.h"
+#include "OpenCLMomentumV4.h"
 #include <stdlib.h>
 #include <string.h>
 #include <iostream>
@@ -19,7 +19,7 @@
 #include "global.h"
 #include "sha_utils.h"
 
-OpenCLMomentumV3::OpenCLMomentumV3(int _HASH_BITS, int _device_num) {
+OpenCLMomentumV4::OpenCLMomentumV4(int _HASH_BITS, int _device_num) {
 	max_threads = 1<<30; // very big
 	HASH_BITS = _HASH_BITS;
 	device_num = _device_num;
@@ -33,7 +33,7 @@ OpenCLMomentumV3::OpenCLMomentumV3(int _HASH_BITS, int _device_num) {
 	}
 
 	// compiles
-	fprintf(stdout, "Starting OpenCLMomentum V3\n");
+	fprintf(stdout, "Starting OpenCLMomentum V4\n");
 	fprintf(stdout, "Device: %s\n", main.getPlatform(0)->getDevice(device_num)->getName().c_str());
 	cl_ulong maxWorkGroupSize = main.getPlatform(0)->getDevice(device_num)->getMaxWorkGroupSize();
 	fprintf(stdout, "Max work group size: %llu\n", maxWorkGroupSize);
@@ -44,7 +44,7 @@ OpenCLMomentumV3::OpenCLMomentumV3(int _HASH_BITS, int _device_num) {
 	std::vector<std::string> program_filenames;
 	program_filenames.push_back("opencl/opencl_cryptsha512.h");
 	program_filenames.push_back("opencl/cryptsha512_kernel.cl");
-	program_filenames.push_back("opencl/OpenCLMomentumV3.cl");
+	program_filenames.push_back("opencl/OpenCLMomentumV4.cl");
 	OpenCLProgram *program = context->loadProgramFromFiles(program_filenames);
 
 	// prealoc kernels
@@ -62,7 +62,7 @@ OpenCLMomentumV3::OpenCLMomentumV3(int _HASH_BITS, int _device_num) {
 	temp_collisions_count = context->createBuffer(sizeof(size_t), CL_MEM_READ_WRITE, NULL);
 }
 
-OpenCLMomentumV3::~OpenCLMomentumV3() {
+OpenCLMomentumV4::~OpenCLMomentumV4() {
 	// destroy
 	delete internal_hash_table;
 	delete (temp_collisions);
@@ -73,7 +73,7 @@ OpenCLMomentumV3::~OpenCLMomentumV3() {
 	delete queue;
 }
 
-void OpenCLMomentumV3::find_collisions(uint8_t* message, collision_struct* collisions, size_t* collision_count) {
+void OpenCLMomentumV4::find_collisions(uint8_t* message, collision_struct* collisions, size_t* collision_count) {
 
 	// temp storage
 	*collision_count = 0;

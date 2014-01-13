@@ -14,9 +14,8 @@ typedef struct _collision_struct {
 } collision_struct;
 
 kernel void kernel_clean_hash_table(global uint32_t * hash_table) {
-	size_t id = get_local_id(0);
-	size_t gid = get_group_id(0) * get_local_size(0);
-	hash_table[id + gid] = 0;
+	size_t id = get_global_id(0);
+	hash_table[id] = 0;
 }
 
 kernel void kernel_sha512(global char * message,
@@ -25,10 +24,11 @@ kernel void kernel_sha512(global char * message,
                           global collision_struct * collisions,
                           global uint32_t * collision_count) {
 
-	size_t id = get_local_id(0);
-	size_t gid = get_group_id(0) * get_local_size(0);
-	uint32_t nonce = (gid*8) + (id*8);
+	size_t id = get_global_id(0);
+	uint32_t nonce = (id*8);
 	char tempHash[36];
+
+	#pragma unroll (32)
 	for (int i = 0; i < 32; i++) tempHash[i+4] = message[i];
 	*((uint32_t*)tempHash) = nonce;
 	
@@ -39,7 +39,7 @@ kernel void kernel_sha512(global char * message,
     sha512_digest(&sctx, hash);
     
     // pra cada hash
-	#pragma unroll
+	#pragma unroll (8)
     for (int i = 0; i < 8; i++) {
 	    // checks in the hash table
 		unsigned long birthdayB = GET_BIRTHDAY(hash[i]);
@@ -51,7 +51,7 @@ kernel void kernel_sha512(global char * message,
 			unsigned int nonceA = (hash_table[birthday]&~COLLISION_KEY_MASK)<<3;
 			if (nonceA != nonce) {
 				uint32_t pos = atomic_inc(collision_count);
-				collisions[pos].nonce_b = (gid*8) + (id*8)+ i;
+				collisions[pos].nonce_b = (id*8)+ i;
 				collisions[pos].nonce_a = nonceA;
 				collisions[pos].birthday = birthdayB;
 			}

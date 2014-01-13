@@ -128,6 +128,8 @@ OBJS= \
 	obj/CProtoshareProcessor.o \
 	obj/AbstractMomentum.o \
 	obj/OpenCLMomentum2.o \
+	obj/OpenCLMomentumV3.o \
+	obj/OpenCLMomentumV4.o \
 	obj/OpenCLObjects.o \
 	obj/sha_utils.o \
 	obj/fileutils.o \
