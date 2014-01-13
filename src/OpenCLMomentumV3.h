@@ -37,6 +37,9 @@ private:
 	OpenCLBuffer* temp_collisions_count;
 	OpenCLBuffer* cl_message;
 
+	// reuse queue
+	OpenCLCommandQueue *queue;
+
 	// semi-constants
 	int HASH_BITS;
 

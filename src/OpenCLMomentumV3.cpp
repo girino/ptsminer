@@ -37,6 +37,13 @@ OpenCLMomentumV3::OpenCLMomentumV3(int _HASH_BITS) {
 	program_filenames.push_back("opencl/OpenCLMomentumV3.cl");
 	OpenCLProgram *program = context->loadProgramFromFiles(program_filenames);
 
+	// prealoc kernels
+	OpenCLKernel *kernel = program->getKernel("kernel_sha512");
+	OpenCLKernel *kernel_cleanup = program->getKernel("kernel_clean_hash_table");
+
+	// only one queue, helps with memory leaking
+	queue = context->createCommandQueue(0);
+
 	size_t BLOCKSIZE = max_threads;
 	// allocate internal structure
 	cl_message = context->createBuffer(sizeof(uint8_t)*32, CL_MEM_READ_ONLY, NULL);
@@ -51,6 +58,9 @@ OpenCLMomentumV3::~OpenCLMomentumV3() {
 	delete (temp_collisions);
 	delete (temp_collisions_count);
 	delete (cl_message);
+
+	// oops, memory was leeeeeeaking...
+	delete queue;
 }
 
 void OpenCLMomentumV3::find_collisions(uint8_t* message, collision_struct* collisions, size_t* collision_count) {
@@ -71,7 +81,6 @@ void OpenCLMomentumV3::find_collisions(uint8_t* message, collision_struct* colli
 	size_t BLOCKSIZE_CLEAN = kernel_cleanup->getWorkGroupSize(main.getPlatform(0)->getDevice(0));
 
 	//printf("BLOCKSIZE = %lld\n", BLOCKSIZE);
-	OpenCLCommandQueue *queue = context->createCommandQueue(0);
 
 	// cleans up the hash table
 	kernel_cleanup->resetArgs();
@@ -94,4 +103,5 @@ void OpenCLMomentumV3::find_collisions(uint8_t* message, collision_struct* colli
 	cl_event eventr1 = queue->enqueueReadBuffer(temp_collisions_count, collision_count, sizeof(size_t), &eventk, 1);
 	queue->enqueueReadBuffer(temp_collisions, collisions, sizeof(collision_struct)*COLLISION_BUFFER_SIZE, &eventr1, 1);
 	queue->finish();
+
 }
