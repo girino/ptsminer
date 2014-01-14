@@ -33,6 +33,7 @@ public:
 class CProtoshareProcessorGPU : public CProtoshareProcessor {
 public:
 	CProtoshareProcessorGPU(SHAMODE _shamode,
+			int gpu_ver,
 			unsigned int _collisionTableBits,
 			unsigned int _thread_id);
 	virtual ~CProtoshareProcessorGPU();

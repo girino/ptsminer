@@ -267,7 +267,7 @@ OpenCLProgram* OpenCLContext::loadProgramFromFiles(std::vector<std::string> file
 OpenCLProgram* OpenCLContext::loadProgramFromStrings(std::vector<std::string> file_strs) {
 
 	const char * str_ptr[file_strs.size()];
-	unsigned long size_ptr[file_strs.size()];
+	size_t size_ptr[file_strs.size()];
 	for (int i = 0; i < file_strs.size(); i++) {
 		str_ptr[i] = file_strs[i].c_str();
 		size_ptr[i] = file_strs[i].size();
