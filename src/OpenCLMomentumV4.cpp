@@ -96,7 +96,9 @@ void OpenCLMomentumV4::find_collisions(uint8_t* message, collision_struct* out_b
 	// cleans up the hash table
 	kernel_cleanup->resetArgs();
 	kernel_cleanup->addGlobalArg(hash_table);
-	cl_event eventkc = queue->enqueueKernel1D(kernel_cleanup, 1<<HASH_BITS, kernel_cleanup->getWorkGroupSize(device), NULL, 0);
+	size_t kc_wgsize = kernel_cleanup->getWorkGroupSize(device);
+	kc_wgsize = 1<<log2(kc_wgsize);
+	cl_event eventkc = queue->enqueueKernel1D(kernel_cleanup, 1<<HASH_BITS, kc_wgsize, NULL, 0);
 
 //	printf("Cleaning the HT\n");
 //	queue->finish();
@@ -106,8 +108,10 @@ void OpenCLMomentumV4::find_collisions(uint8_t* message, collision_struct* out_b
 	kernel_calculate_all_hashes->resetArgs();
 	kernel_calculate_all_hashes->addGlobalArg(cl_message);
 	kernel_calculate_all_hashes->addGlobalArg(hashes);
+	size_t kcah_wgsize = kernel_calculate_all_hashes->getWorkGroupSize(device);
+	kcah_wgsize = 1<<log2(kcah_wgsize);
 	cl_event eventcah = queue->enqueueKernel1D(kernel_calculate_all_hashes, MAX_MOMENTUM_NONCE/8,
-							kernel_calculate_all_hashes->getWorkGroupSize(device), &eventwmsg, 1);
+			kcah_wgsize, &eventwmsg, 1);
 
 //	printf("step 1, calculate hashes\n");
 //	queue->finish();
@@ -118,8 +122,10 @@ void OpenCLMomentumV4::find_collisions(uint8_t* message, collision_struct* out_b
 	kernel_fill_table->addGlobalArg(hash_table);
 	kernel_fill_table->addScalarUInt(ht_size);
 	cl_event temp_events[] = {eventcah, eventkc};
+	size_t kft_wgsize = kernel_fill_table->getWorkGroupSize(device);
+	kft_wgsize = 1<<log2(kft_wgsize);
 	cl_event eventft = queue->enqueueKernel1D(kernel_fill_table, MAX_MOMENTUM_NONCE,
-							kernel_fill_table->getWorkGroupSize(device), temp_events, 2);
+							kft_wgsize, temp_events, 2);
 
 //	printf("step 2, populate hashtable\n");
 //	queue->finish();
@@ -133,8 +139,10 @@ void OpenCLMomentumV4::find_collisions(uint8_t* message, collision_struct* out_b
 	kernel_find_collisions->addGlobalArg(collisions);
 	kernel_find_collisions->addGlobalArg(collisions_count);
 	cl_event temp_events2[] = {eventft, eventwcount};
+	size_t kfc_wgsize = kernel_find_collisions->getWorkGroupSize(device);
+	kfc_wgsize = 1<<log2(kfc_wgsize);
 	cl_event eventfc = queue->enqueueKernel1D(kernel_find_collisions, MAX_MOMENTUM_NONCE,
-							kernel_find_collisions->getWorkGroupSize(device), temp_events2, 2);
+							kfc_wgsize, temp_events2, 2);
 
 //	printf("step 3, find collisions\n");
 //	queue->finish();
