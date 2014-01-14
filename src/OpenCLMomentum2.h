@@ -25,6 +25,7 @@ public:
 	OpenCLMomentum2(int _HASH_BITS);
 	virtual ~OpenCLMomentum2();
 	virtual void find_collisions(uint8_t* message, collision_struct* collisions, size_t* collision_count);
+	virtual int getCollisionCeiling();
 private:
 	size_t max_threads;
 

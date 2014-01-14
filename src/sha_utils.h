@@ -27,7 +27,8 @@ void sha512_func_sse4(unsigned char* in, unsigned int size, unsigned char* out);
 #define GET_BIRTHDAY(x) (x >> (64ULL - SEARCH_SPACE_BITS));
 
 uint32 revalidateCollision(uint8_t* midHash, uint32_t indexA_orig,
-		uint32_t indexB);
-
+		uint32_t indexB)
+;
+int log2(size_t value);
 
 #endif /* SHA_UTILS_H_ */

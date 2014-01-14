@@ -799,7 +799,7 @@ CProtoshareProcessorGPU::CProtoshareProcessorGPU(SHAMODE _shamode, int gpu_algor
 	this->collisionTableBits = _collisionTableBits;
 	this->shamode = _shamode;
 	this->thread_id = _thread_id;
-	this->collisions = new collision_struct[COLLISION_BUFFER_SIZE];
+	this->collisions = new collision_struct[M1->getCollisionCeiling()];
 }
 
 CProtoshareProcessorGPU::~CProtoshareProcessorGPU() {
@@ -828,6 +828,11 @@ void CProtoshareProcessorGPU::protoshares_process(blockHeader_t* block,
 	}
 
 	M1->find_collisions(midHash, collisions, &count_collisions);
+
+	if (count_collisions > M1->getCollisionCeiling()) {
+		std::cerr << "Warning: found more candidate collisions than storage space available" << std::endl;
+		count_collisions = M1->getCollisionCeiling();
+	}
 
 	for (int i = 0; i < count_collisions; i++) {
 		protoshares_revalidateCollision(block, midHash, collisions[i].nonce_a, collisions[i].nonce_b, collisions[i].birthday, bp, sha512_func_sph, thread_id);

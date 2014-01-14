@@ -58,7 +58,7 @@ OpenCLMomentumV3::OpenCLMomentumV3(int _HASH_BITS, int _device_num) {
 	// allocate internal structure
 	cl_message = context->createBuffer(sizeof(uint8_t)*32, CL_MEM_READ_ONLY, NULL);
 	internal_hash_table = context->createBuffer(sizeof(uint32_t)*(1<<HASH_BITS), CL_MEM_READ_WRITE, NULL);
-	temp_collisions = context->createBuffer(sizeof(collision_struct)*COLLISION_BUFFER_SIZE, CL_MEM_WRITE_ONLY, NULL);
+	temp_collisions = context->createBuffer(sizeof(collision_struct)*getCollisionCeiling(), CL_MEM_WRITE_ONLY, NULL);
 	temp_collisions_count = context->createBuffer(sizeof(size_t), CL_MEM_READ_WRITE, NULL);
 }
 
@@ -88,9 +88,13 @@ void OpenCLMomentumV3::find_collisions(uint8_t* message, collision_struct* colli
 
 	//size_t BLOCKSIZE = main.getPlatform(0)->getDevice(0)->getMaxWorkGroupSize();
 	size_t BLOCKSIZE = kernel->getWorkGroupSize(OpenCLMain::getInstance().getPlatform(0)->getDevice(device_num));
+	//has to be a power of 2
+	BLOCKSIZE = 1<<log2(BLOCKSIZE);
 	size_t BLOCKSIZE_CLEAN = kernel_cleanup->getWorkGroupSize(OpenCLMain::getInstance().getPlatform(0)->getDevice(device_num));
+	BLOCKSIZE_CLEAN = 1<<log2(BLOCKSIZE_CLEAN);
 
-	//printf("BLOCKSIZE = %lld\n", BLOCKSIZE);
+//	printf("BLOCKSIZE = %ld\n", BLOCKSIZE);
+//	printf("BLOCKSIZE_CLEAN = %ld\n", BLOCKSIZE_CLEAN);
 
 	// cleans up the hash table
 	kernel_cleanup->resetArgs();
@@ -111,7 +115,11 @@ void OpenCLMomentumV3::find_collisions(uint8_t* message, collision_struct* colli
 //	cl_event eventk = queue->enqueueKernel1D(kernel, MAX_MOMENTUM_NONCE, worksize, &eventw, 1);
 	cl_event eventk = queue->enqueueKernel1D(kernel, MAX_MOMENTUM_NONCE/8, BLOCKSIZE, &eventw2, 1);
 	cl_event eventr1 = queue->enqueueReadBuffer(temp_collisions_count, collision_count, sizeof(size_t), &eventk, 1);
-	queue->enqueueReadBuffer(temp_collisions, collisions, sizeof(collision_struct)*COLLISION_BUFFER_SIZE, &eventr1, 1);
+	queue->enqueueReadBuffer(temp_collisions, collisions, sizeof(collision_struct)*getCollisionCeiling(), &eventr1, 1);
 	queue->finish();
 
+}
+
+int OpenCLMomentumV3::getCollisionCeiling() {
+	return (1<<20);
 }

@@ -61,7 +61,7 @@ OpenCLMomentumV4::OpenCLMomentumV4(int _HASH_BITS, int _device_num) {
 	cl_message = context->createBuffer(sizeof(uint8_t)*32, CL_MEM_READ_ONLY, NULL);
 	hashes = context->createBuffer(sizeof(uint64_t)*MAX_MOMENTUM_NONCE, CL_MEM_READ_WRITE, NULL);
 	hash_table = context->createBuffer(sizeof(uint32_t)*(1<<HASH_BITS), CL_MEM_READ_WRITE, NULL);
-	collisions = context->createBuffer(sizeof(collision_struct)*COLLISION_BUFFER_SIZE, CL_MEM_WRITE_ONLY, NULL);
+	collisions = context->createBuffer(sizeof(collision_struct)*getCollisionCeiling(), CL_MEM_WRITE_ONLY, NULL);
 	collisions_count = context->createBuffer(sizeof(size_t), CL_MEM_READ_WRITE, NULL);
 }
 
@@ -140,7 +140,7 @@ void OpenCLMomentumV4::find_collisions(uint8_t* message, collision_struct* out_b
 //	queue->finish();
 
 	queue->enqueueReadBuffer(collisions_count, out_count, sizeof(size_t), &eventfc, 1);
-	queue->enqueueReadBuffer(collisions, out_buff, sizeof(collision_struct)*COLLISION_BUFFER_SIZE, &eventfc, 1);
+	queue->enqueueReadBuffer(collisions, out_buff, sizeof(collision_struct)*getCollisionCeiling(), &eventfc, 1);
 
 //	printf("step 4, copy output\n");
 	queue->finish();
@@ -149,4 +149,8 @@ void OpenCLMomentumV4::find_collisions(uint8_t* message, collision_struct* out_b
 	printf("Collision Count = %d\n", (*out_count));
 #endif
 
+}
+
+int OpenCLMomentumV4::getCollisionCeiling() {
+	return (1<<8);
 }

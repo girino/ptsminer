@@ -61,3 +61,12 @@ uint32 revalidateCollision(uint8_t* midHash, uint32_t indexA_orig,
 		}
 		return indexA;
 }
+
+int log2(size_t value) {
+	int ret = 0;
+	while (value > 1) {
+		ret++;
+		value = value>>1;
+	}
+	return ret;
+}

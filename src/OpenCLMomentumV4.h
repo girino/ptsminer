@@ -20,13 +20,12 @@
 #include "OpenCLObjects.h"
 #include "AbstractMomentum.h"
 
-#define COLLISION_BUFFER_SIZE (1<<16)
-
 class OpenCLMomentumV4: public AbstractMomentum {
 public:
 	OpenCLMomentumV4(int _HASH_BITS, int device_num);
 	virtual ~OpenCLMomentumV4();
 	virtual void find_collisions(uint8_t* message, collision_struct* collisions, size_t* collision_count);
+	virtual int getCollisionCeiling();
 private:
 	size_t max_threads;
 

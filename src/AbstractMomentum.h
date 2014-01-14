@@ -19,6 +19,7 @@ public:
 	AbstractMomentum();
 	virtual ~AbstractMomentum();
 	virtual void find_collisions(uint8_t* message, collision_struct* collisions, size_t * collision_count) = 0;
+	virtual int getCollisionCeiling() = 0;
 };
 
 
