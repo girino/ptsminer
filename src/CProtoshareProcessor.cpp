@@ -384,6 +384,7 @@ void _protoshares_process_V4(blockHeader_t* block,  CBlockProvider* bp,
         uint64_t resultHash[8];
         memcpy(tempHash+4, midHash, 32);
 
+		#pragma unroll (8388608) //MAX_MOMENTUM_NONCE/BIRTHDAYS_PER_HASH
         for(uint32_t n=0; n<(MAX_MOMENTUM_NONCE>>3); n++)
         {
         		*(uint32_t*)tempHash = n<<3;
@@ -500,7 +501,7 @@ public:
 	~CHashTable() {
 		// do nothing for now;
 	}
-	uint32_t check(uint64_t birthdayB, uint32_t nonce) {
+	__inline uint32_t check(uint64_t birthdayB, uint32_t nonce) {
 		uint32_t collisionKey = (uint32_t)((birthdayB>>18) & COLLISION_KEY_MASK);
 		uint64_t birthday = birthdayB & (COLLISION_TABLE_SIZE-1);
 		if( ((buffer[birthday]&COLLISION_KEY_MASK) == collisionKey)) {
