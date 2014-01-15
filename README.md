@@ -11,6 +11,7 @@ Features:
 - custom getworx-protocol
 - light-weight code
 - portable
+- GPU support with opencl (experimental)
 
 Build notes:
 you'll need libboost & yasm
