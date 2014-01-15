@@ -644,6 +644,7 @@ int main(int argc, char **argv)
 		if (mode_param == "gpuv2") gpu_ver = 2;
 		else if (mode_param == "gpuv3") gpu_ver = 3;
 		else if (mode_param == "gpuv4") gpu_ver = 4;
+		else if (mode_param == "gpuv5") gpu_ver = 5;
 	} else {
 #ifdef	__x86_64__
 		std::cout << "**" << "SSE4/AVX auto-detection" << std::endl;

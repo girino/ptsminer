@@ -9,6 +9,7 @@
 #include "sha_utils.h"
 #include "OpenCLMomentumV3.h"
 #include "OpenCLMomentumV4.h"
+#include "OpenCLMomentumV5.h"
 #include "OpenCLMomentum2.h"
 #include "global.h"
 
@@ -794,6 +795,8 @@ CProtoshareProcessorGPU::CProtoshareProcessorGPU(SHAMODE _shamode, int gpu_algor
 		M1 = new OpenCLMomentumV3(_collisionTableBits, _thread_id);
 	} else if (gpu_algorithm == 4) {
 		M1 = new OpenCLMomentumV4(_collisionTableBits, _thread_id);
+	} else if (gpu_algorithm == 5) {
+		M1 = new OpenCLMomentumV5(_collisionTableBits, _thread_id);
 	} else {
 		assert(gpu_algorithm <= 4 && gpu_algorithm >= 2);
 	}
