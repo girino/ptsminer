@@ -1,3 +1,12 @@
+/*
+ * Copyright (c) 2014 Girino Vey.
+ *
+ * All code in this file is copyrighted to me, Girino Vey, and licensed under Girino's
+ * Anarchist License, available at http://girino.org/license and is available on this
+ * repository as the file girino_license.txt
+ *
+ */
+
 #ifdef _ECLIPSE_OPENCL_HEADER
 #   include "OpenCLKernel.hpp"
 #endif

@@ -3,6 +3,13 @@
  *
  *  Created on: 20/12/2013
  *      Author: girino
+ *
+ * Copyright (c) 2014 Girino Vey.
+ *
+ * All code in this file is copyrighted to me, Girino Vey, and licensed under Girino's
+ * Anarchist License, available at http://girino.org/license and is available on this
+ * repository as the file girino_license.txt
+ *
  */
 
 #ifndef CPROTOSHAREPOOCESSOR_H_
