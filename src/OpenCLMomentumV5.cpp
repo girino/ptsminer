@@ -176,7 +176,7 @@ void OpenCLMomentumV5::find_collisions(uint8_t* message, collision_struct* out_b
 	// sort on GPU
 	size_t worksize = kernel_calculate_all_hashes->getWorkGroupSize(device);
 	worksize = 1<<log2(worksize);
-	size_t gworksize = (worksize>4)?worksize:4;
+	size_t gworksize = MAX_MOMENTUM_NONCE;
 	uint32_t m = MAX_MOMENTUM_NONCE/gworksize; // how many in each sort
 	printf("sorting %d blocks of size %d\n", gworksize, m);
 
@@ -186,24 +186,26 @@ void OpenCLMomentumV5::find_collisions(uint8_t* message, collision_struct* out_b
 	kernel_sort_hashes->addScalarUInt(m);
 	cl_event eventsh = queue->enqueueKernel1D(kernel_sort_hashes, gworksize, worksize, &eventcah, 1);
 
-	hash_struct * CPU_hashes = (hash_struct*) malloc(sizeof(hash_struct)*MAX_MOMENTUM_NONCE);
-	queue->enqueueReadBuffer(hashes, CPU_hashes, sizeof(hash_struct)*MAX_MOMENTUM_NONCE, &eventcah, 1);
-
-	queue->finish();
-	printf("calculated all hashes\n");
-
-
 	// i'm doing it manually for now.
 	// finish sorting
 	hash_struct * CPU_temp = (hash_struct*) malloc(sizeof(hash_struct)*MAX_MOMENTUM_NONCE);
+	cl_event eventmh = eventsh;
 	for (m = m * 2; m <= MAX_MOMENTUM_NONCE; m*=2) {
 		size_t tmp_worksize = MAX_MOMENTUM_NONCE/m;
 		printf("merging %d blocks of size %d\n", tmp_worksize, m);
+		worksize = (worksize>tmp_worksize)?tmp_worksize:worksize;
 
-		for (int i = 0; i < tmp_worksize; i++) {
-			merge(CPU_hashes, CPU_temp, m, i);
-		}
+		kernel_merge_hashes->resetArgs();
+		kernel_merge_hashes->addGlobalArg(hashes);
+		kernel_merge_hashes->addGlobalArg(temp_buffer);
+		kernel_merge_hashes->addScalarUInt(m);
+		cl_event eventmh_tmp = eventmh;
+		eventmh = queue->enqueueKernel1D(kernel_merge_hashes, tmp_worksize, worksize, &eventmh_tmp, 1);
+
 	}
+	hash_struct * CPU_hashes = (hash_struct*) malloc(sizeof(hash_struct)*MAX_MOMENTUM_NONCE);
+	queue->enqueueReadBuffer(hashes, CPU_hashes, sizeof(hash_struct)*MAX_MOMENTUM_NONCE, &eventcah, 1);
+	queue->finish();
 	printf("sorted all hashes\n");
 
 	// asserts it's sorted
