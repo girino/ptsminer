@@ -130,7 +130,7 @@ OpenCLPlatform::OpenCLPlatform(cl_platform_id id, cl_device_type device_type) {
 	cl_device_id all_devices[num_devices];
 	check_error(clGetDeviceIDs(my_id, device_type, num_devices, all_devices, NULL));
 	for (int i = 0; i < num_devices; i++) {
-		devices.push_back(new OpenCLDevice(all_devices[i]));
+		devices.push_back(new OpenCLDevice(all_devices[i], this));
 	}
 
 	// creates the context
@@ -182,8 +182,9 @@ OpenCLPlatform* OpenCLMain::getPlatform(int pos) {
 	return platforms[pos];
 }
 
-OpenCLDevice::OpenCLDevice(cl_device_id _id) {
+OpenCLDevice::OpenCLDevice(cl_device_id _id, OpenCLPlatform* _parent) {
 	my_id = _id;
+	parent = _parent;
 	// debug
 	char name[128];
 	check_error(clGetDeviceInfo(my_id, CL_DEVICE_NAME, 128 * sizeof(char), name,
@@ -341,10 +342,10 @@ OpenCLKernel::~OpenCLKernel() {
 	clReleaseKernel(kernel);
 }
 
-OpenCLCommandQueue* OpenCLContext::createCommandQueue(int deviceIndex) {
-	OpenCLDevice* device = devices[deviceIndex];
-	return createCommandQueue(device);
-}
+//OpenCLCommandQueue* OpenCLContext::createCommandQueue(int deviceIndex) {
+//	OpenCLDevice* device = devices[deviceIndex];
+//	return createCommandQueue(device);
+//}
 
 OpenCLCommandQueue* OpenCLContext::createCommandQueue(OpenCLDevice* device) {
 	cl_int error;
@@ -464,4 +465,39 @@ size_t OpenCLKernel::getWorkGroupSize(OpenCLDevice* device) {
 	check_error(clGetKernelWorkGroupInfo(this->kernel, device->getDeviceId(),
 				CL_KERNEL_WORK_GROUP_SIZE, sizeof(ret), &ret, NULL));
 	return ret;
+}
+
+int OpenCLMain::getNumPlatforms() {
+	return platforms.size();
+}
+
+OpenCLDevice* OpenCLMain::getDevice(int pos) {
+	int count = 0;
+	for(int i = 0; i < getNumPlatforms(); i++) {
+		OpenCLPlatform* p = getPlatform(i);
+		for (int j = 0; j < p->getNumDevices(); j++) {
+			if (count == pos) {
+				return p->getDevice(j);
+			}
+			count++;
+		}
+	}
+	fprintf(stderr, "WARNING: Device not found %d\n", pos);
+	return NULL;
+}
+
+OpenCLDevice* OpenCLMain::getDevice(int platform_pos, int pos) {
+	return getPlatform(platform_pos)->getDevice(pos);
+}
+
+int OpenCLMain::getNumDevices() {
+	int count = 0;
+	for(int i = 0; i < getNumPlatforms(); i++) {
+		count += getPlatform(i)->getNumDevices();
+	}
+	return count;
+}
+
+OpenCLPlatform* OpenCLDevice::getPlatform() {
+	return this->parent;
 }

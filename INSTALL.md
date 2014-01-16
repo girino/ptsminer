@@ -24,7 +24,10 @@ export LD_LIBRARY_PATH=/usr/local/cuda-5.5/lib64:$LD_LIBRARY_PATH
 
 AMD:
 
-???
+Should have been done by the installer, but if not, try:
+
+export LD_LIBRARY_PATH=/opt/AMDAPP/lib/x86_64:$LD_LIBRARY_PATH
+ 
 
 3) Install other dependencies:
 

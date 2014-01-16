@@ -26,19 +26,20 @@
 #include "global.h"
 #include "sha_utils.h"
 
-OpenCLMomentum2::OpenCLMomentum2(int _HASH_BITS) {
+OpenCLMomentum2::OpenCLMomentum2(int _HASH_BITS, int _device_num) {
 	max_threads = 1<<30; // very big
 	HASH_BITS = _HASH_BITS;
+	device_num = _device_num;
 
 	// compiles
 	fprintf(stdout, "Starting OpenCLMomentum V2\n");
-	fprintf(stdout, "Device: %s\n", OpenCLMain::getInstance().getPlatform(0)->getDevice(0)->getName().c_str());
-	cl_ulong maxWorkGroupSize = OpenCLMain::getInstance().getPlatform(0)->getDevice(0)->getMaxWorkGroupSize();
+	fprintf(stdout, "Device: %s\n", OpenCLMain::getInstance().getDevice(device_num)->getName().c_str());
+	cl_ulong maxWorkGroupSize = OpenCLMain::getInstance().getDevice(device_num)->getMaxWorkGroupSize();
 	fprintf(stdout, "Max work group size: %llu\n", maxWorkGroupSize);
 
 	if (maxWorkGroupSize < max_threads) max_threads = maxWorkGroupSize;
 
-	OpenCLContext *context = OpenCLMain::getInstance().getPlatform(0)->getContext();
+	OpenCLContext *context = OpenCLMain::getInstance().getDevice(device_num)->getPlatform()->getContext();
 	std::vector<std::string> program_filenames;
 	program_filenames.push_back("opencl/opencl_cryptsha512.h");
 	program_filenames.push_back("opencl/cryptsha512_kernel.cl");
@@ -67,7 +68,7 @@ void OpenCLMomentum2::find_collisions(uint8_t* message, collision_struct* collis
 	// temp storage
 	*collision_count = 0;
 
-	OpenCLContext *context = OpenCLMain::getInstance().getPlatform(0)->getContext();
+	OpenCLContext *context = OpenCLMain::getInstance().getDevice(device_num)->getPlatform()->getContext();
 	OpenCLProgram *program = context->getProgram(0);
 
 	OpenCLKernel *kernel = program->getKernel("kernel_sha512");
@@ -75,7 +76,7 @@ void OpenCLMomentum2::find_collisions(uint8_t* message, collision_struct* collis
 	assert(kernel != NULL);
 
 	//size_t BLOCKSIZE = main.getPlatform(0)->getDevice(0)->getMaxWorkGroupSize();
-	size_t BLOCKSIZE = kernel->getWorkGroupSize(OpenCLMain::getInstance().getPlatform(0)->getDevice(0));
+	size_t BLOCKSIZE = kernel->getWorkGroupSize(OpenCLMain::getInstance().getDevice(device_num));
 
 	//printf("BLOCKSIZE = %lld\n", BLOCKSIZE);
 
@@ -87,7 +88,7 @@ void OpenCLMomentum2::find_collisions(uint8_t* message, collision_struct* collis
 	kernel->addGlobalArg(temp_collisions);
 	kernel->addGlobalArg(temp_collisions_count);
 
-	OpenCLCommandQueue *queue = context->createCommandQueue(0);
+	OpenCLCommandQueue *queue = context->createCommandQueue(OpenCLMain::getInstance().getDevice(device_num));
 	cl_event eventw1 = queue->enqueueWriteBuffer(cl_message, message, sizeof(uint8_t)*32, NULL, 0);
 	cl_event eventw2 = queue->enqueueWriteBuffer(temp_collisions_count, collision_count, sizeof(uint32_t), &eventw1, 1);
 

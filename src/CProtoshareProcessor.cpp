@@ -797,7 +797,7 @@ void CProtoshareProcessor::protoshares_process(blockHeader_t* block,
 CProtoshareProcessorGPU::CProtoshareProcessorGPU(SHAMODE _shamode, int gpu_algorithm,
 		unsigned int _collisionTableBits, unsigned int _thread_id) {
 	if (gpu_algorithm == 2) {
-		M1 = new OpenCLMomentum2(_collisionTableBits);
+		M1 = new OpenCLMomentum2(_collisionTableBits, _thread_id);
 	} else if (gpu_algorithm == 3) {
 		M1 = new OpenCLMomentumV3(_collisionTableBits, _thread_id);
 	} else if (gpu_algorithm == 4) {

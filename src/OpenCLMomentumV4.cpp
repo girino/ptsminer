@@ -35,20 +35,20 @@ OpenCLMomentumV4::OpenCLMomentumV4(int _HASH_BITS, int _device_num) {
 	OpenCLMain& main = OpenCLMain::getInstance();
 
 	// checks if device exists
-	if (main.getInstance().getPlatform(0)->getNumDevices() <= device_num) {
+	if (main.getNumDevices() <= device_num) {
 		printf("ERROR: DEVICE %d does not exist. Please limit your threads to one per device.\n", device_num);
 		assert(false);
 	}
 
 	// compiles
 	fprintf(stdout, "Starting OpenCLMomentum V4\n");
-	fprintf(stdout, "Device: %s\n", main.getPlatform(0)->getDevice(device_num)->getName().c_str());
-	cl_ulong maxWorkGroupSize = main.getPlatform(0)->getDevice(device_num)->getMaxWorkGroupSize();
+	fprintf(stdout, "Device: %s\n", main.getDevice(device_num)->getName().c_str());
+	cl_ulong maxWorkGroupSize = main.getDevice(device_num)->getMaxWorkGroupSize();
 	fprintf(stdout, "Max work group size: %llu\n", maxWorkGroupSize);
 
 	if (maxWorkGroupSize < max_threads) max_threads = maxWorkGroupSize;
 
-	OpenCLContext *context = main.getPlatform(0)->getContext();
+	OpenCLContext *context = main.getDevice(device_num)->getPlatform()->getContext();
 	std::vector<std::string> program_filenames;
 	program_filenames.push_back("opencl/opencl_cryptsha512.h");
 	program_filenames.push_back("opencl/cryptsha512_kernel.cl");
@@ -62,7 +62,7 @@ OpenCLMomentumV4::OpenCLMomentumV4(int _HASH_BITS, int _device_num) {
 	OpenCLKernel *kernel_cleanup = program->getKernel("kernel_clean_hash_table");
 
 	// only one queue, helps with memory leaking
-	queue = context->createCommandQueue(device_num);
+	queue = context->createCommandQueue(main.getDevice(device_num));
 
 	size_t BLOCKSIZE = max_threads;
 	// allocate internal structure
@@ -91,7 +91,7 @@ void OpenCLMomentumV4::find_collisions(uint8_t* message, collision_struct* out_b
 	*out_count = 0;
 	uint32_t ht_size = 1<<HASH_BITS;
 
-	OpenCLContext *context = OpenCLMain::getInstance().getPlatform(0)->getContext();
+	OpenCLContext *context = OpenCLMain::getInstance().getDevice(device_num)->getPlatform()->getContext();
 	OpenCLProgram *program = context->getProgram(0);
 
 	OpenCLKernel *kernel_calculate_all_hashes = program->getKernel("calculate_all_hashes");
@@ -99,7 +99,7 @@ void OpenCLMomentumV4::find_collisions(uint8_t* message, collision_struct* out_b
 	OpenCLKernel *kernel_find_collisions = program->getKernel("find_collisions");
 	OpenCLKernel *kernel_cleanup = program->getKernel("kernel_clean_hash_table");
 
-	OpenCLDevice * device = OpenCLMain::getInstance().getPlatform(0)->getDevice(device_num);
+	OpenCLDevice * device = OpenCLMain::getInstance().getDevice(device_num);
 
 	// cleans up the hash table
 	kernel_cleanup->resetArgs();

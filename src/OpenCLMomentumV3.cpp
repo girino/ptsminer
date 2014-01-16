@@ -34,20 +34,20 @@ OpenCLMomentumV3::OpenCLMomentumV3(int _HASH_BITS, int _device_num) {
 	OpenCLMain& main = OpenCLMain::getInstance();
 
 	// checks if device exists
-	if (main.getInstance().getPlatform(0)->getNumDevices() <= device_num) {
+	if (main.getInstance().getNumDevices() <= device_num) {
 		printf("ERROR: DEVICE %d does not exist. Please limit your threads to one per device.\n", device_num);
 		assert(false);
 	}
 
 	// compiles
 	fprintf(stdout, "Starting OpenCLMomentum V3\n");
-	fprintf(stdout, "Device: %s\n", main.getPlatform(0)->getDevice(device_num)->getName().c_str());
-	cl_ulong maxWorkGroupSize = main.getPlatform(0)->getDevice(device_num)->getMaxWorkGroupSize();
+	fprintf(stdout, "Device: %s\n", main.getDevice(device_num)->getName().c_str());
+	cl_ulong maxWorkGroupSize = main.getDevice(device_num)->getMaxWorkGroupSize();
 	fprintf(stdout, "Max work group size: %llu\n", maxWorkGroupSize);
 
 	if (maxWorkGroupSize < max_threads) max_threads = maxWorkGroupSize;
 
-	OpenCLContext *context = main.getPlatform(0)->getContext();
+	OpenCLContext *context = main.getDevice(device_num)->getPlatform()->getContext();
 	std::vector<std::string> program_filenames;
 	program_filenames.push_back("opencl/opencl_cryptsha512.h");
 	program_filenames.push_back("opencl/cryptsha512_kernel.cl");
@@ -59,7 +59,7 @@ OpenCLMomentumV3::OpenCLMomentumV3(int _HASH_BITS, int _device_num) {
 	OpenCLKernel *kernel_cleanup = program->getKernel("kernel_clean_hash_table");
 
 	// only one queue, helps with memory leaking
-	queue = context->createCommandQueue(device_num);
+	queue = context->createCommandQueue(main.getDevice(device_num));
 
 	size_t BLOCKSIZE = max_threads;
 	// allocate internal structure
@@ -85,7 +85,7 @@ void OpenCLMomentumV3::find_collisions(uint8_t* message, collision_struct* colli
 	// temp storage
 	*collision_count = 0;
 
-	OpenCLContext *context = OpenCLMain::getInstance().getPlatform(0)->getContext();
+	OpenCLContext *context = OpenCLMain::getInstance().getDevice(device_num)->getPlatform()->getContext();
 	OpenCLProgram *program = context->getProgram(0);
 
 	OpenCLKernel *kernel = program->getKernel("kernel_sha512");
@@ -94,10 +94,10 @@ void OpenCLMomentumV3::find_collisions(uint8_t* message, collision_struct* colli
 	assert(kernel != NULL);
 
 	//size_t BLOCKSIZE = main.getPlatform(0)->getDevice(0)->getMaxWorkGroupSize();
-	size_t BLOCKSIZE = kernel->getWorkGroupSize(OpenCLMain::getInstance().getPlatform(0)->getDevice(device_num));
+	size_t BLOCKSIZE = kernel->getWorkGroupSize(OpenCLMain::getInstance().getDevice(device_num));
 	//has to be a power of 2
 	BLOCKSIZE = 1<<log2(BLOCKSIZE);
-	size_t BLOCKSIZE_CLEAN = kernel_cleanup->getWorkGroupSize(OpenCLMain::getInstance().getPlatform(0)->getDevice(device_num));
+	size_t BLOCKSIZE_CLEAN = kernel_cleanup->getWorkGroupSize(OpenCLMain::getInstance().getDevice(device_num));
 	BLOCKSIZE_CLEAN = 1<<log2(BLOCKSIZE_CLEAN);
 
 //	printf("BLOCKSIZE = %ld\n", BLOCKSIZE);

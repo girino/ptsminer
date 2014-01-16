@@ -105,20 +105,20 @@ OpenCLMomentumV5::OpenCLMomentumV5(int _HASH_BITS, int _device_num) {
 	OpenCLMain& main = OpenCLMain::getInstance();
 
 	// checks if device exists
-	if (main.getInstance().getPlatform(0)->getNumDevices() <= device_num) {
+	if (main.getInstance().getNumDevices() <= device_num) {
 		printf("ERROR: DEVICE %d does not exist. Please limit your threads to one per device.\n", device_num);
 		assert(false);
 	}
 
 	// compiles
 	fprintf(stdout, "Starting OpenCLMomentum V5\n");
-	fprintf(stdout, "Device: %s\n", main.getPlatform(0)->getDevice(device_num)->getName().c_str());
-	cl_ulong maxWorkGroupSize = main.getPlatform(0)->getDevice(device_num)->getMaxWorkGroupSize();
+	fprintf(stdout, "Device: %s\n", main.getDevice(device_num)->getName().c_str());
+	cl_ulong maxWorkGroupSize = main.getDevice(device_num)->getMaxWorkGroupSize();
 	fprintf(stdout, "Max work group size: %llu\n", maxWorkGroupSize);
 
 	if (maxWorkGroupSize < max_threads) max_threads = maxWorkGroupSize;
 
-	OpenCLContext *context = main.getPlatform(0)->getContext();
+	OpenCLContext *context = main.getDevice(device_num)->getPlatform()->getContext();
 	std::vector<std::string> program_filenames;
 	program_filenames.push_back("opencl/opencl_cryptsha512.h");
 	program_filenames.push_back("opencl/cryptsha512_kernel.cl");
@@ -132,7 +132,7 @@ OpenCLMomentumV5::OpenCLMomentumV5(int _HASH_BITS, int _device_num) {
 	OpenCLKernel *kernel_merge_hashes = program->getKernel("merge_hashes");
 
 	// only one queue, helps with memory leaking
-	queue = context->createCommandQueue(device_num);
+	queue = context->createCommandQueue(main.getDevice(device_num));
 
 	size_t BLOCKSIZE = max_threads;
 	// allocate internal structure
@@ -161,7 +161,7 @@ void OpenCLMomentumV5::find_collisions(uint8_t* message, collision_struct* out_b
 	*out_count = 0;
 	uint32_t ht_size = 1<<HASH_BITS;
 
-	OpenCLContext *context = OpenCLMain::getInstance().getPlatform(0)->getContext();
+	OpenCLContext *context = OpenCLMain::getInstance().getDevice(device_num)->getPlatform()->getContext();
 	OpenCLProgram *program = context->getProgram(0);
 
 	OpenCLKernel *kernel_calculate_all_hashes = program->getKernel("calculate_all_hashes");
@@ -169,7 +169,7 @@ void OpenCLMomentumV5::find_collisions(uint8_t* message, collision_struct* out_b
 	OpenCLKernel *kernel_sort_hashes = program->getKernel("sort_hashes");
 	OpenCLKernel *kernel_merge_hashes = program->getKernel("merge_hashes");
 
-	OpenCLDevice * device = OpenCLMain::getInstance().getPlatform(0)->getDevice(device_num);
+	OpenCLDevice * device = OpenCLMain::getInstance().getDevice(device_num);
 
 	cl_event eventwmsg = queue->enqueueWriteBuffer(cl_message, message, sizeof(uint8_t)*32, NULL, 0);
 	// step 1, calculate hashes

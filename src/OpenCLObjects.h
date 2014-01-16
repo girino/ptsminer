@@ -32,6 +32,7 @@ class OpenCLProgram;
 class OpenCLContext;
 class OpenCLKernel;
 class OpenCLDevice;
+class OpenCLPlatform;
 
 class OpenCLBuffer {
 public:
@@ -94,7 +95,7 @@ private:
 
 class OpenCLDevice {
 public:
-	OpenCLDevice(cl_device_id _id);
+	OpenCLDevice(cl_device_id _id, OpenCLPlatform* _parent);
 	virtual ~OpenCLDevice();
 	std::string getName();
 	long getMaxWorkGroupSize();
@@ -103,8 +104,10 @@ public:
 	int getMaxWorkItemDimensions();
 	std::vector<long> getMaxWorkItemSizes();
 	cl_device_id getDeviceId();
+	OpenCLPlatform* getPlatform();
 private:
 	cl_device_id my_id;
+	OpenCLPlatform* parent;
 };
 
 class OpenCLContext {
@@ -149,6 +152,10 @@ public:
         return instance;
 	}
 	OpenCLPlatform* getPlatform(int pos);
+	int getNumPlatforms();
+	OpenCLDevice* getDevice(int pos);
+	OpenCLDevice* getDevice(int platform_pos, int pos);
+	int getNumDevices();
 private:
 	OpenCLMain();
 	virtual ~OpenCLMain();
