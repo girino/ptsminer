@@ -795,21 +795,22 @@ void CProtoshareProcessor::protoshares_process(blockHeader_t* block,
 }
 
 CProtoshareProcessorGPU::CProtoshareProcessorGPU(SHAMODE _shamode, int gpu_algorithm,
-		unsigned int _collisionTableBits, unsigned int _thread_id) {
+		unsigned int _collisionTableBits, unsigned int _thread_id, unsigned int _device_num) {
 	if (gpu_algorithm == 2) {
-		M1 = new OpenCLMomentum2(_collisionTableBits, _thread_id);
+		M1 = new OpenCLMomentum2(_collisionTableBits, _device_num);
 	} else if (gpu_algorithm == 3) {
-		M1 = new OpenCLMomentumV3(_collisionTableBits, _thread_id);
+		M1 = new OpenCLMomentumV3(_collisionTableBits, _device_num);
 	} else if (gpu_algorithm == 4) {
-		M1 = new OpenCLMomentumV4(_collisionTableBits, _thread_id);
+		M1 = new OpenCLMomentumV4(_collisionTableBits, _device_num);
 	} else if (gpu_algorithm == 5) {
-		M1 = new OpenCLMomentumV5(_collisionTableBits, _thread_id);
+		M1 = new OpenCLMomentumV5(_collisionTableBits, _device_num);
 	} else {
 		assert(gpu_algorithm <= 4 && gpu_algorithm >= 2);
 	}
 	this->collisionTableBits = _collisionTableBits;
 	this->shamode = _shamode;
 	this->thread_id = _thread_id;
+	this->device_num = _device_num;
 	this->collisions = new collision_struct[M1->getCollisionCeiling()];
 }
 

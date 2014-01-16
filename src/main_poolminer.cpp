@@ -36,6 +36,7 @@ bool use_avxsse4;
 bool use_sphlib;
 bool use_gpu;
 int gpu_ver;
+std::vector<int> deviceList;
 size_t thread_num_max;
 static size_t fee_to_pay;
 static size_t miner_id;
@@ -177,7 +178,7 @@ public:
 		if (shamode != GPU)
 			processor = new CProtoshareProcessor(shamode, collisionTableBits, _id);
 		else
-			processor = new CProtoshareProcessorGPU(shamode, gpu_ver, collisionTableBits, _id);
+			processor = new CProtoshareProcessorGPU(shamode, gpu_ver, collisionTableBits, _id, deviceList[_id]);
 
 		while (running) {
 			if (orgblock != _bprovider->getOriginalBlock()) {
@@ -556,10 +557,29 @@ int getArgInt(int argc, char **argv, std::string name, int def) {
 	return def;
 }
 
+std::vector<int> getArgVector(int argc, char **argv, std::string name) {
+	std::vector<int> ret;
+	for(int i = 0; i < argc-1; i++) {
+		if (name == std::string(argv[i])) {
+			std::string list = std::string(argv[i+1]);
+			std::string delimiter = ",";
+			size_t pos = 0;
+			while ((pos = list.find(delimiter)) != std::string::npos) {
+				std::string token = list.substr(0, pos);
+				ret.push_back(atoi(token.c_str()));
+			    list.erase(0, pos + delimiter.length());
+			}
+			ret.push_back(atoi(list.c_str()));
+			break;
+		}
+	}
+	return ret;
+}
+
 void print_help(const char* _exec) {
-	std::cerr << "usage: " << _exec << " -u <payout-address/username> [-p password] [-t <threads-to-use>] [-m <memory-option>] [-a <mode>] [-o <server>] [-q port]" << std::endl;
+	std::cerr << "usage: " << _exec << " -u <payout-address/username> [-p password] [-t <threads-to-use>] [-m <memory-option>] [-a <mode>] [-o <server>] [-q port] [-device x,y,z]" << std::endl;
 	std::cerr << std::endl;
-	std::cerr << "defaults: -u '' -p x -t 1 -m 27 -a auto -o ptsmine.beeeeer.org -q 1337" << std::endl;
+	std::cerr << "defaults: -u '' -p x -t 1 -m 27 -a auto -o ptsmine.beeeeer.org -q 1337 -device 0" << std::endl;
 	std::cerr << std::endl;
 	std::cerr << "memory-option: integer value - memory usage" << std::endl;
 	std::cerr << "\t\t20 -->    4 MB per thread (not recommended)" << std::endl;
@@ -578,7 +598,7 @@ void print_help(const char* _exec) {
 	std::cerr << "\t\tavx --> use AVX (Intel optimized)" << std::endl;
 	std::cerr << "\t\tsse4 --> use SSE4 (Intel optimized)" << std::endl;
 	std::cerr << "\t\tsph --> use SPHLIB" << std::endl;
-	std::cerr << "\t\tgpu --> use GPU (remember to use a single thread)" << std::endl;
+	std::cerr << "\t\tgpu --> use GPU (remember to specify the devices with -device)" << std::endl;
 	std::cerr << std::endl;
 	std::cerr << "example:" << std::endl;
 	std::cerr << "> " << _exec << " -u PkyeQNn1yGV5psGeZ4sDu6nz2vWHTujf4h -t 4 -m 25 -a sse4" << std::endl;
@@ -614,6 +634,7 @@ int main(int argc, char **argv)
 	pool_address = getArgStr(argc, argv, "-o", "ptsmine.beeeeer.org");
 	pool_port = getArgStr(argc, argv, "-q", "1337");
 	std::string mode_param = getArgStr(argc, argv, "-a", "auto");
+	deviceList = getArgVector(argc, argv, "-device");
 
 	if (pool_username == "")
 	{
@@ -672,6 +693,17 @@ int main(int argc, char **argv)
 		std::cout << "**" << std::endl;
 		std::cout << "**** >>> WARNING" << std::endl;
 #endif
+	}
+
+	if (use_gpu) {
+		if (deviceList.empty()) {
+			for (int i = 0; i < thread_num_max; i++) {
+				deviceList.push_back(i);
+			}
+		} else {
+			thread_num_max = deviceList.size();
+		}
+		std::cout << "Adjusting num threads to match device list: " << thread_num_max << std::endl;
 	}
 
 	t_start = boost::posix_time::second_clock::local_time();

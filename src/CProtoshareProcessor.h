@@ -42,12 +42,14 @@ public:
 	CProtoshareProcessorGPU(SHAMODE _shamode,
 			int gpu_ver,
 			unsigned int _collisionTableBits,
-			unsigned int _thread_id);
+			unsigned int _thread_id,
+			unsigned int _device_num);
 	virtual ~CProtoshareProcessorGPU();
 	virtual void protoshares_process(blockHeader_t* block,  CBlockProvider* bp);
 private:
 	unsigned int collisionTableBits;
 	unsigned int thread_id;
+	unsigned int device_num;
 	SHAMODE shamode;
 	AbstractMomentum * M1;
 	collision_struct * collisions;
