@@ -139,6 +139,8 @@ public:
 	OpenCLDevice* getDevice(int pos);
 	int getNumDevices();
 	OpenCLContext* getContext();
+
+	std::string getName();
 private:
 	std::vector<OpenCLDevice *> devices;
 	cl_platform_id my_id;
@@ -156,6 +158,7 @@ public:
 	OpenCLDevice* getDevice(int pos);
 	OpenCLDevice* getDevice(int platform_pos, int pos);
 	int getNumDevices();
+	void listDevices();
 private:
 	OpenCLMain();
 	virtual ~OpenCLMain();

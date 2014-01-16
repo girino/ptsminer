@@ -41,7 +41,7 @@ OpenCLMomentumV3::OpenCLMomentumV3(int _HASH_BITS, int _device_num) {
 
 	// compiles
 	fprintf(stdout, "Starting OpenCLMomentum V3\n");
-	fprintf(stdout, "Device: %s\n", main.getDevice(device_num)->getName().c_str());
+	fprintf(stdout, "Device %02d: %s\n", device_num, main.getDevice(device_num)->getName().c_str());
 	cl_ulong maxWorkGroupSize = main.getDevice(device_num)->getMaxWorkGroupSize();
 	fprintf(stdout, "Max work group size: %llu\n", maxWorkGroupSize);
 

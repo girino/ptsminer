@@ -33,7 +33,7 @@ OpenCLMomentum2::OpenCLMomentum2(int _HASH_BITS, int _device_num) {
 
 	// compiles
 	fprintf(stdout, "Starting OpenCLMomentum V2\n");
-	fprintf(stdout, "Device: %s\n", OpenCLMain::getInstance().getDevice(device_num)->getName().c_str());
+	fprintf(stdout, "Device %02d: %s\n", device_num, OpenCLMain::getInstance().getDevice(device_num)->getName().c_str());
 	cl_ulong maxWorkGroupSize = OpenCLMain::getInstance().getDevice(device_num)->getMaxWorkGroupSize();
 	fprintf(stdout, "Max work group size: %llu\n", maxWorkGroupSize);
 

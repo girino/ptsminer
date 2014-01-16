@@ -106,16 +106,20 @@ void print_err_msg(cl_int err_code) {
 void error_callback_func (const char *errinfo,
                     const void *private_info, size_t cb,
                     void *user_data) {
+#ifdef DEBUG
 	std::cerr << "ERROR (callback): " << errinfo << std::endl;
+#endif
 }
 
 OpenCLPlatform::OpenCLPlatform(cl_platform_id id, cl_device_type device_type) {
 	my_id = id;
 	// debug
+#ifdef DEBUG
 	char name[128];
 	check_error(clGetPlatformInfo(my_id, CL_PLATFORM_NAME, 128 * sizeof(char), name,
 			NULL));
 	fprintf(stdout, "Platform: %s\n", name);
+#endif
 
 	// devices;
 	cl_uint num_devices;
@@ -170,6 +174,8 @@ OpenCLMain::OpenCLMain() {
 	for (int i = 0; i < num_platforms; i++) {
 		platforms.push_back(new OpenCLPlatform(all_platforms[i]));
 	}
+	// list all devices
+	listDevices();
 }
 
 OpenCLMain::~OpenCLMain() {
@@ -186,10 +192,12 @@ OpenCLDevice::OpenCLDevice(cl_device_id _id, OpenCLPlatform* _parent) {
 	my_id = _id;
 	parent = _parent;
 	// debug
+#ifdef DEBUG
 	char name[128];
 	check_error(clGetDeviceInfo(my_id, CL_DEVICE_NAME, 128 * sizeof(char), name,
 			NULL));
 	fprintf(stdout, "  Device: %s\n", name);
+#endif
 
 	// inits kernels or whatever...
 
@@ -500,4 +508,25 @@ int OpenCLMain::getNumDevices() {
 
 OpenCLPlatform* OpenCLDevice::getPlatform() {
 	return this->parent;
+}
+
+void OpenCLMain::listDevices() {
+	int count = 0;
+	for(int i = 0; i < getNumPlatforms(); i++) {
+		OpenCLPlatform* p = getPlatform(i);
+		printf("Platform %02d: %s\n", i, p->getName().c_str());
+		for (int j = 0; j < p->getNumDevices(); j++) {
+			printf("  Device %02d: %s\n", count, p->getDevice(j)->getName().c_str());
+			p->getDevice(j);
+			count++;
+		}
+	}
+}
+
+std::string OpenCLPlatform::getName() {
+	size_t param_value_size_ret;
+	check_error(clGetPlatformInfo(my_id, CL_PLATFORM_NAME, 0, NULL, &param_value_size_ret));
+	char name[param_value_size_ret];
+	check_error(clGetPlatformInfo(my_id, CL_PLATFORM_NAME, param_value_size_ret, name, NULL));
+	return std::string(name);
 }
