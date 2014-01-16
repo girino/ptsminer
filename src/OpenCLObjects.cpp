@@ -121,6 +121,11 @@ OpenCLPlatform::OpenCLPlatform(cl_platform_id id, cl_device_type device_type) {
 	cl_uint num_devices;
 	check_error(clGetDeviceIDs(my_id, device_type, 0, NULL, &num_devices));
 
+	if (num_devices <= 0) {
+		fprintf(stderr, "ERROR: no valid devices found\n");
+		assert(num_devices > 0);
+	}
+
 	// iterates through devices
 	cl_device_id all_devices[num_devices];
 	check_error(clGetDeviceIDs(my_id, device_type, num_devices, all_devices, NULL));
@@ -156,6 +161,10 @@ OpenCLMain::OpenCLMain() {
 	// lazy instantiation, inits with NULL
 	unsigned int num_platforms;
 	check_error(clGetPlatformIDs(0, NULL, &num_platforms));
+	if (num_platforms <= 0) {
+		fprintf(stderr, "ERROR: no valid platforms found\n");
+		assert(num_platforms > 0);
+	}
 	cl_platform_id all_platforms[num_platforms];
 	check_error(clGetPlatformIDs(num_platforms, all_platforms, NULL));
 	for (int i = 0; i < num_platforms; i++) {
