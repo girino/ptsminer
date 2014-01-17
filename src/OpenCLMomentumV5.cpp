@@ -118,7 +118,7 @@ OpenCLMomentumV5::OpenCLMomentumV5(int _HASH_BITS, int _device_num) {
 
 	if (maxWorkGroupSize < max_threads) max_threads = maxWorkGroupSize;
 
-	OpenCLContext *context = main.getDevice(device_num)->getPlatform()->getContext();
+	OpenCLContext *context = main.getDevice(device_num)->getContext();
 	std::vector<std::string> program_filenames;
 	program_filenames.push_back("opencl/opencl_cryptsha512.h");
 	program_filenames.push_back("opencl/cryptsha512_kernel.cl");
@@ -161,7 +161,7 @@ void OpenCLMomentumV5::find_collisions(uint8_t* message, collision_struct* out_b
 	*out_count = 0;
 	uint32_t ht_size = 1<<HASH_BITS;
 
-	OpenCLContext *context = OpenCLMain::getInstance().getDevice(device_num)->getPlatform()->getContext();
+	OpenCLContext *context = OpenCLMain::getInstance().getDevice(device_num)->getContext();
 	OpenCLProgram *program = context->getProgram(0);
 
 	OpenCLKernel *kernel_calculate_all_hashes = program->getKernel("calculate_all_hashes");
@@ -171,15 +171,15 @@ void OpenCLMomentumV5::find_collisions(uint8_t* message, collision_struct* out_b
 
 	OpenCLDevice * device = OpenCLMain::getInstance().getDevice(device_num);
 
-	cl_event eventwmsg = queue->enqueueWriteBuffer(cl_message, message, sizeof(uint8_t)*32, NULL, 0);
+	queue->enqueueWriteBuffer(cl_message, message, sizeof(uint8_t)*32);
 	// step 1, calculate hashes
 	kernel_calculate_all_hashes->resetArgs();
 	kernel_calculate_all_hashes->addGlobalArg(cl_message);
 	kernel_calculate_all_hashes->addGlobalArg(hashes);
 	size_t kcah_wgsize = kernel_calculate_all_hashes->getWorkGroupSize(device);
 	kcah_wgsize = 1<<log2(kcah_wgsize);
-	cl_event eventcah = queue->enqueueKernel1D(kernel_calculate_all_hashes, MAX_MOMENTUM_NONCE/8,
-			kcah_wgsize, &eventwmsg, 1);
+	queue->enqueueKernel1D(kernel_calculate_all_hashes, MAX_MOMENTUM_NONCE/8,
+			kcah_wgsize);
 
 	// sort on GPU
 	size_t worksize = kernel_calculate_all_hashes->getWorkGroupSize(device);
@@ -192,12 +192,11 @@ void OpenCLMomentumV5::find_collisions(uint8_t* message, collision_struct* out_b
 	kernel_sort_hashes->addGlobalArg(hashes);
 	kernel_sort_hashes->addGlobalArg(temp_buffer);
 	kernel_sort_hashes->addScalarUInt(m);
-	cl_event eventsh = queue->enqueueKernel1D(kernel_sort_hashes, gworksize, worksize, &eventcah, 1);
+	queue->enqueueKernel1D(kernel_sort_hashes, gworksize, worksize);
 
 	// i'm doing it manually for now.
 	// finish sorting
 	hash_struct * CPU_temp = (hash_struct*) malloc(sizeof(hash_struct)*MAX_MOMENTUM_NONCE);
-	cl_event eventmh = eventsh;
 	for (m = m * 2; m <= MAX_MOMENTUM_NONCE; m*=2) {
 		size_t tmp_worksize = MAX_MOMENTUM_NONCE/m;
 		printf("merging %d blocks of size %d\n", tmp_worksize, m);
@@ -207,12 +206,11 @@ void OpenCLMomentumV5::find_collisions(uint8_t* message, collision_struct* out_b
 		kernel_merge_hashes->addGlobalArg(hashes);
 		kernel_merge_hashes->addGlobalArg(temp_buffer);
 		kernel_merge_hashes->addScalarUInt(m);
-		cl_event eventmh_tmp = eventmh;
-		eventmh = queue->enqueueKernel1D(kernel_merge_hashes, tmp_worksize, worksize, &eventmh_tmp, 1);
+		queue->enqueueKernel1D(kernel_merge_hashes, tmp_worksize, worksize);
 
 	}
 	hash_struct * CPU_hashes = (hash_struct*) malloc(sizeof(hash_struct)*MAX_MOMENTUM_NONCE);
-	queue->enqueueReadBuffer(hashes, CPU_hashes, sizeof(hash_struct)*MAX_MOMENTUM_NONCE, &eventcah, 1);
+	queue->enqueueReadBuffer(hashes, CPU_hashes, sizeof(hash_struct)*MAX_MOMENTUM_NONCE);
 	queue->finish();
 	printf("sorted all hashes\n");
 

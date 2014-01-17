@@ -48,7 +48,7 @@ OpenCLMomentumV4::OpenCLMomentumV4(int _HASH_BITS, int _device_num) {
 
 	if (maxWorkGroupSize < max_threads) max_threads = maxWorkGroupSize;
 
-	OpenCLContext *context = main.getDevice(device_num)->getPlatform()->getContext();
+	OpenCLContext *context = main.getDevice(device_num)->getContext();
 	std::vector<std::string> program_filenames;
 	program_filenames.push_back("opencl/opencl_cryptsha512.h");
 	program_filenames.push_back("opencl/cryptsha512_kernel.cl");
@@ -91,7 +91,7 @@ void OpenCLMomentumV4::find_collisions(uint8_t* message, collision_struct* out_b
 	*out_count = 0;
 	uint32_t ht_size = 1<<HASH_BITS;
 
-	OpenCLContext *context = OpenCLMain::getInstance().getDevice(device_num)->getPlatform()->getContext();
+	OpenCLContext *context = OpenCLMain::getInstance().getDevice(device_num)->getContext();
 	OpenCLProgram *program = context->getProgram(0);
 
 	OpenCLKernel *kernel_calculate_all_hashes = program->getKernel("calculate_all_hashes");
@@ -106,20 +106,20 @@ void OpenCLMomentumV4::find_collisions(uint8_t* message, collision_struct* out_b
 	kernel_cleanup->addGlobalArg(hash_table);
 	size_t kc_wgsize = kernel_cleanup->getWorkGroupSize(device);
 	kc_wgsize = 1<<log2(kc_wgsize);
-	cl_event eventkc = queue->enqueueKernel1D(kernel_cleanup, 1<<HASH_BITS, kc_wgsize, NULL, 0);
+	queue->enqueueKernel1D(kernel_cleanup, 1<<HASH_BITS, kc_wgsize);
 
 //	printf("Cleaning the HT\n");
 //	queue->finish();
 
-	cl_event eventwmsg = queue->enqueueWriteBuffer(cl_message, message, sizeof(uint8_t)*32, &eventkc, 1);
+	queue->enqueueWriteBuffer(cl_message, message, sizeof(uint8_t)*32);
 	// step 1, calculate hashes
 	kernel_calculate_all_hashes->resetArgs();
 	kernel_calculate_all_hashes->addGlobalArg(cl_message);
 	kernel_calculate_all_hashes->addGlobalArg(hashes);
 	size_t kcah_wgsize = kernel_calculate_all_hashes->getWorkGroupSize(device);
 	kcah_wgsize = 1<<log2(kcah_wgsize);
-	cl_event eventcah = queue->enqueueKernel1D(kernel_calculate_all_hashes, MAX_MOMENTUM_NONCE/8,
-			kcah_wgsize, &eventwmsg, 1);
+	queue->enqueueKernel1D(kernel_calculate_all_hashes, MAX_MOMENTUM_NONCE/8,
+			kcah_wgsize);
 
 //	printf("step 1, calculate hashes\n");
 //	queue->finish();
@@ -129,16 +129,15 @@ void OpenCLMomentumV4::find_collisions(uint8_t* message, collision_struct* out_b
 	kernel_fill_table->addGlobalArg(hashes);
 	kernel_fill_table->addGlobalArg(hash_table);
 	kernel_fill_table->addScalarUInt(ht_size);
-	cl_event temp_events[] = {eventcah, eventkc};
 	size_t kft_wgsize = kernel_fill_table->getWorkGroupSize(device);
 	kft_wgsize = 1<<log2(kft_wgsize);
-	cl_event eventft = queue->enqueueKernel1D(kernel_fill_table, MAX_MOMENTUM_NONCE,
-							kft_wgsize, temp_events, 2);
+	queue->enqueueKernel1D(kernel_fill_table, MAX_MOMENTUM_NONCE,
+							kft_wgsize);
 
 //	printf("step 2, populate hashtable\n");
 //	queue->finish();
 
-	cl_event eventwcount = queue->enqueueWriteBuffer(collisions_count, out_count, sizeof(size_t), NULL, 0);
+	queue->enqueueWriteBuffer(collisions_count, out_count, sizeof(size_t));
 	// step 3, find collisions
 	kernel_find_collisions->resetArgs();
 	kernel_find_collisions->addGlobalArg(hashes);
@@ -146,20 +145,20 @@ void OpenCLMomentumV4::find_collisions(uint8_t* message, collision_struct* out_b
 	kernel_find_collisions->addScalarUInt(ht_size);
 	kernel_find_collisions->addGlobalArg(collisions);
 	kernel_find_collisions->addGlobalArg(collisions_count);
-	cl_event temp_events2[] = {eventft, eventwcount};
 	size_t kfc_wgsize = kernel_find_collisions->getWorkGroupSize(device);
 	kfc_wgsize = 1<<log2(kfc_wgsize);
-	cl_event eventfc = queue->enqueueKernel1D(kernel_find_collisions, MAX_MOMENTUM_NONCE,
-							kfc_wgsize, temp_events2, 2);
+	queue->enqueueKernel1D(kernel_find_collisions, MAX_MOMENTUM_NONCE,
+							kfc_wgsize);
 
 //	printf("step 3, find collisions\n");
 //	queue->finish();
 
-	queue->enqueueReadBuffer(collisions_count, out_count, sizeof(size_t), &eventfc, 1);
-	queue->enqueueReadBuffer(collisions, out_buff, sizeof(collision_struct)*getCollisionCeiling(), &eventfc, 1);
+	queue->enqueueReadBuffer(collisions_count, out_count, sizeof(size_t));
+	queue->enqueueReadBuffer(collisions, out_buff, sizeof(collision_struct)*getCollisionCeiling());
 
 //	printf("step 4, copy output\n");
 	queue->finish();
+
 
 #ifdef DEBUG
 	printf("Collision Count = %d\n", (*out_count));

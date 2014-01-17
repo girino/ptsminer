@@ -46,11 +46,11 @@ public:
 	OpenCLCommandQueue(cl_command_queue _queue);
 	~OpenCLCommandQueue();
 
-	cl_event enqueueWriteBuffer(OpenCLBuffer* dest, void* origin, size_t size, cl_event wait_for[] = NULL, size_t num_events = 0);
-	cl_event enqueueWriteBufferBlocking(OpenCLBuffer* dest, void* origin, size_t size, cl_event wait_for[] = NULL, size_t num_events = 0);
-	cl_event enqueueKernel1D(OpenCLKernel *kernel,	size_t worksize, size_t work_items, cl_event wait_for[],size_t num_events);
-	cl_event enqueueReadBuffer(OpenCLBuffer* origin, void* dest, size_t size, cl_event wait_for[] = NULL, size_t num_events = 0);
-	cl_event enqueueReadBufferBlocking(OpenCLBuffer* origin, void* dest, size_t size, cl_event wait_for[] = NULL, size_t num_events = 0);
+	void enqueueWriteBuffer(OpenCLBuffer* dest, void* origin, size_t size);
+	void enqueueWriteBufferBlocking(OpenCLBuffer* dest, void* origin, size_t size);
+	void enqueueKernel1D(OpenCLKernel *kernel,	size_t worksize, size_t work_items);
+	void enqueueReadBuffer(OpenCLBuffer* origin, void* dest, size_t size);
+	void enqueueReadBufferBlocking(OpenCLBuffer* origin, void* dest, size_t size);
 
 	void finish();
 private:
@@ -105,14 +105,17 @@ public:
 	std::vector<long> getMaxWorkItemSizes();
 	cl_device_id getDeviceId();
 	OpenCLPlatform* getPlatform();
+	OpenCLContext* getContext();
 private:
 	cl_device_id my_id;
 	OpenCLPlatform* parent;
+	OpenCLContext* context;
 };
 
 class OpenCLContext {
 public:
 	OpenCLContext(cl_context _context, std::vector<OpenCLDevice*> _devices);
+	OpenCLContext(cl_context _context, OpenCLDevice* _device);
 	~OpenCLContext();
 
 	OpenCLProgram * loadProgramFromFiles(std::vector<std::string> filename);
@@ -138,13 +141,12 @@ public:
 
 	OpenCLDevice* getDevice(int pos);
 	int getNumDevices();
-	OpenCLContext* getContext();
 
 	std::string getName();
+	cl_platform_id getId();
 private:
 	std::vector<OpenCLDevice *> devices;
 	cl_platform_id my_id;
-	OpenCLContext* context;
 };
 
 class OpenCLMain {

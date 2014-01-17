@@ -39,7 +39,7 @@ OpenCLMomentum2::OpenCLMomentum2(int _HASH_BITS, int _device_num) {
 
 	if (maxWorkGroupSize < max_threads) max_threads = maxWorkGroupSize;
 
-	OpenCLContext *context = OpenCLMain::getInstance().getDevice(device_num)->getPlatform()->getContext();
+	OpenCLContext *context = OpenCLMain::getInstance().getDevice(device_num)->getContext();
 	std::vector<std::string> program_filenames;
 	program_filenames.push_back("opencl/opencl_cryptsha512.h");
 	program_filenames.push_back("opencl/cryptsha512_kernel.cl");
@@ -68,7 +68,7 @@ void OpenCLMomentum2::find_collisions(uint8_t* message, collision_struct* collis
 	// temp storage
 	*collision_count = 0;
 
-	OpenCLContext *context = OpenCLMain::getInstance().getDevice(device_num)->getPlatform()->getContext();
+	OpenCLContext *context = OpenCLMain::getInstance().getDevice(device_num)->getContext();
 	OpenCLProgram *program = context->getProgram(0);
 
 	OpenCLKernel *kernel = program->getKernel("kernel_sha512");
@@ -89,13 +89,13 @@ void OpenCLMomentum2::find_collisions(uint8_t* message, collision_struct* collis
 	kernel->addGlobalArg(temp_collisions_count);
 
 	OpenCLCommandQueue *queue = context->createCommandQueue(OpenCLMain::getInstance().getDevice(device_num));
-	cl_event eventw1 = queue->enqueueWriteBuffer(cl_message, message, sizeof(uint8_t)*32, NULL, 0);
-	cl_event eventw2 = queue->enqueueWriteBuffer(temp_collisions_count, collision_count, sizeof(uint32_t), &eventw1, 1);
+	queue->enqueueWriteBuffer(cl_message, message, sizeof(uint8_t)*32);
+	queue->enqueueWriteBuffer(temp_collisions_count, collision_count, sizeof(uint32_t));
 
 //	cl_event eventk = queue->enqueueKernel1D(kernel, MAX_MOMENTUM_NONCE, worksize, &eventw, 1);
-	cl_event eventk = queue->enqueueKernel1D(kernel, MAX_MOMENTUM_NONCE/8, BLOCKSIZE, &eventw2, 1);
-	cl_event eventr1 = queue->enqueueReadBuffer(temp_collisions_count, collision_count, sizeof(size_t), &eventk, 1);
-	queue->enqueueReadBuffer(temp_collisions, collisions, sizeof(collision_struct)*getCollisionCeiling(), &eventr1, 1);
+	queue->enqueueKernel1D(kernel, MAX_MOMENTUM_NONCE/8, BLOCKSIZE);
+	queue->enqueueReadBuffer(temp_collisions_count, collision_count, sizeof(size_t));
+	queue->enqueueReadBuffer(temp_collisions, collisions, sizeof(collision_struct)*getCollisionCeiling());
 	queue->finish();
 }
 

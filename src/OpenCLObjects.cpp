@@ -136,20 +136,12 @@ OpenCLPlatform::OpenCLPlatform(cl_platform_id id, cl_device_type device_type) {
 	for (int i = 0; i < num_devices; i++) {
 		devices.push_back(new OpenCLDevice(all_devices[i], this));
 	}
-
-	// creates the context
-	int error;
-	cl_context_properties properties[] = {CL_CONTEXT_PLATFORM, (cl_context_properties)my_id, 0};
-	context = new OpenCLContext(clCreateContext (properties, num_devices, all_devices, error_callback_func, NULL, &error), devices);
-	check_error(error);
-
 }
 
 OpenCLPlatform::~OpenCLPlatform() {
 	for (int i = 0; i < devices.size(); i++) {
 		delete devices[i];
 	}
-	delete context;
 }
 
 OpenCLDevice* OpenCLPlatform::getDevice(int pos) {
@@ -200,6 +192,7 @@ OpenCLDevice::OpenCLDevice(cl_device_id _id, OpenCLPlatform* _parent) {
 #endif
 
 	// inits kernels or whatever...
+	context = NULL; // lazy instantiation
 
 }
 OpenCLDevice::~OpenCLDevice() {
@@ -257,6 +250,11 @@ std::vector<long> OpenCLDevice::getMaxWorkItemSizes() {
 OpenCLContext::OpenCLContext(cl_context _context, std::vector<OpenCLDevice*> _devices) {
 	context = _context;
 	devices = _devices;
+}
+
+OpenCLContext::OpenCLContext(cl_context _context, OpenCLDevice* _device) {
+	context = _context;
+	devices.push_back(_device);
 }
 
 OpenCLContext::~OpenCLContext() {
@@ -319,7 +317,15 @@ OpenCLProgram* OpenCLContext::loadProgramFromStrings(std::vector<std::string> fi
 	return ret;
 }
 
-OpenCLContext* OpenCLPlatform::getContext() {
+OpenCLContext* OpenCLDevice::getContext() {
+
+	if (context == NULL) {
+		// creates the context
+		int error;
+		cl_context_properties properties[] = {CL_CONTEXT_PLATFORM, (cl_context_properties)parent->getId(), 0};
+		context = new OpenCLContext(clCreateContext (properties, 1, &my_id, error_callback_func, NULL, &error), this);
+		check_error(error);
+	}
 	return context;
 }
 
@@ -327,7 +333,7 @@ int not_main(int argc, char **argv) {
 	std::vector<std::string> files;
 	files.push_back("opencl/cryptsha512_kernel.cl");
 	files.push_back("OpenCLMomentum.cl");
-	OpenCLMain::getInstance().getPlatform(0)->getContext()->loadProgramFromFiles(files);
+	//OpenCLMain::getInstance().getPlatform(0)->getContext()->loadProgramFromFiles(files);
 }
 
 OpenCLKernel* OpenCLProgram::getKernel(std::string name) {
@@ -424,40 +430,29 @@ void OpenCLKernel::addLocalArg(size_t size) {
 	arg_count++;
 }
 
-cl_event OpenCLCommandQueue::enqueueWriteBuffer(OpenCLBuffer* dest, void* origin,
-		size_t size, cl_event wait_for[], size_t num_events) {
-	cl_event ret;
-	check_error(clEnqueueWriteBuffer(this->queue, dest->buffer, CL_FALSE, 0, size, origin, num_events, wait_for, &ret));
-	return ret;
+void OpenCLCommandQueue::enqueueWriteBuffer(OpenCLBuffer* dest, void* origin,
+		size_t size) {
+	check_error(clEnqueueWriteBuffer(this->queue, dest->buffer, CL_FALSE, 0, size, origin, 0, NULL, NULL));
 }
 
-cl_event OpenCLCommandQueue::enqueueWriteBufferBlocking(OpenCLBuffer* dest,
-		void* origin, size_t size, cl_event wait_for[], size_t num_events) {
-	cl_event ret;
-	check_error(clEnqueueWriteBuffer(this->queue, dest->buffer, CL_TRUE, 0, size, origin, num_events, wait_for, &ret));
-	return ret;
+void OpenCLCommandQueue::enqueueWriteBufferBlocking(OpenCLBuffer* dest,
+		void* origin, size_t size) {
+	check_error(clEnqueueWriteBuffer(this->queue, dest->buffer, CL_TRUE, 0, size, origin, 0, NULL, NULL));
 }
 
-cl_event OpenCLCommandQueue::enqueueKernel1D(OpenCLKernel *kernel,
-		size_t worksize, size_t work_items, cl_event wait_for[],
-		size_t num_events) {
-	cl_event ret;
-	check_error(clEnqueueNDRangeKernel (this->queue, kernel->getKernel(), 1, NULL, &worksize, &work_items, num_events, wait_for, &ret));
-	return ret;
+void OpenCLCommandQueue::enqueueKernel1D(OpenCLKernel *kernel,
+		size_t worksize, size_t work_items) {
+	check_error(clEnqueueNDRangeKernel (this->queue, kernel->getKernel(), 1, NULL, &worksize, &work_items, 0, NULL, NULL));
 }
 
-cl_event OpenCLCommandQueue::enqueueReadBuffer(OpenCLBuffer* origin, void* dest,
-		size_t size, cl_event wait_for[], size_t num_events) {
-	cl_event ret;
-	check_error(clEnqueueReadBuffer(this->queue, origin->buffer, CL_FALSE, 0, size, dest, num_events, wait_for, &ret));
-	return ret;
+void OpenCLCommandQueue::enqueueReadBuffer(OpenCLBuffer* origin, void* dest,
+		size_t size) {
+	check_error(clEnqueueReadBuffer(this->queue, origin->buffer, CL_FALSE, 0, size, dest, 0, NULL, NULL));
 }
 
-cl_event OpenCLCommandQueue::enqueueReadBufferBlocking(OpenCLBuffer* origin,
-		void* dest, size_t size, cl_event wait_for[], size_t num_events) {
-	cl_event ret;
-	check_error(clEnqueueReadBuffer(this->queue, origin->buffer, CL_TRUE, 0, size, dest, num_events, wait_for, &ret));
-	return ret;
+void OpenCLCommandQueue::enqueueReadBufferBlocking(OpenCLBuffer* origin,
+		void* dest, size_t size) {
+	check_error(clEnqueueReadBuffer(this->queue, origin->buffer, CL_TRUE, 0, size, dest, 0, NULL, NULL));
 }
 
 void OpenCLCommandQueue::finish() {
@@ -529,4 +524,8 @@ std::string OpenCLPlatform::getName() {
 	char name[param_value_size_ret];
 	check_error(clGetPlatformInfo(my_id, CL_PLATFORM_NAME, param_value_size_ret, name, NULL));
 	return std::string(name);
+}
+
+cl_platform_id OpenCLPlatform::getId() {
+	return my_id;
 }
