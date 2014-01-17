@@ -5,29 +5,29 @@
 #define _CRYPTSHA512_H
 
 //Copied from common-opencl.h
-//#define UNKNOWN                 0
-//#define CPU                     1
-//#define GPU                     2
-//#define ACCELERATOR             4
-//#define AMD                     64
-//#define NVIDIA                  128
-//#define INTEL                   256
-//#define AMD_GCN                 1024
-//#define AMD_VLIW4               2048
-//#define AMD_VLIW5               4096
-//#define NO_BYTE_ADDRESSABLE     8192
+#define UNKNOWN                 0
+#define CPU                     1
+#define GPU                     2
+#define ACCELERATOR             4
+#define AMD                     64
+#define NVIDIA                  128
+#define INTEL                   256
+#define AMD_GCN                 1024
+#define AMD_VLIW4               2048
+#define AMD_VLIW5               4096
+#define NO_BYTE_ADDRESSABLE     8192
 
-//#define cpu(n)                  ((n & CPU) == (CPU))
-//#define gpu(n)                  ((n & GPU) == (GPU))
-//#define gpu_amd(n)              ((n & AMD) && gpu(n))
-//#define gpu_amd_64(n)           (0)
-//#define gpu_nvidia(n)           ((n & NVIDIA) && gpu(n))
-//#define gpu_intel(n)            ((n & INTEL) && gpu(n))
-//#define cpu_amd(n)              ((n & AMD) && cpu(n))
-//#define amd_gcn(n)              ((n & AMD_GCN) && gpu_amd(n))
-//#define amd_vliw4(n)            ((n & AMD_VLIW4) && gpu_amd(n))
-//#define amd_vliw5(n)            ((n & AMD_VLIW5) && gpu_amd(n))
-//#define no_byte_addressable(n)  (n & NO_BYTE_ADDRESSABLE)
+#define cpu(n)                  ((n & CPU) == (CPU))
+#define gpu(n)                  ((n & GPU) == (GPU))
+#define gpu_amd(n)              ((n & AMD) && gpu(n))
+#define gpu_amd_64(n)           (0)
+#define gpu_nvidia(n)           ((n & NVIDIA) && gpu(n))
+#define gpu_intel(n)            ((n & INTEL) && gpu(n))
+#define cpu_amd(n)              ((n & AMD) && cpu(n))
+#define amd_gcn(n)              ((n & AMD_GCN) && gpu_amd(n))
+#define amd_vliw4(n)            ((n & AMD_VLIW4) && gpu_amd(n))
+#define amd_vliw5(n)            ((n & AMD_VLIW5) && gpu_amd(n))
+#define no_byte_addressable(n)  (n & NO_BYTE_ADDRESSABLE)
 
 //Type names definition.
 #define uint8_t  unsigned char
@@ -70,26 +70,26 @@
 
 #define SWAP64_V(n)     SWAP(n)
 
-//#if gpu_amd_64(DEVICE_INFO)
-//        #pragma OPENCL EXTENSION cl_amd_media_ops : enable
-//        #define ror(x, n)       amd_bitalign(x, x, (uint64_t) n)
-//        #define Ch(x, y, z)     amd_bytealign(x, y, z)
-//        #define Maj(x, y, z)    amd_bytealign(z ^ x, y, x )
-//        #define SWAP64(n)       (as_ulong(as_uchar8(n).s76543210))
-//#elif gpu_amd(DEVICE_INFO)
-//        #define Ch(x,y,z)       bitselect(z, y, x)
-//        #define Maj(x,y,z)      bitselect(x, y, z ^ x)
-//        #define ror(x, n)       rotate(x, (uint64_t) 64-n)
-//        #define SWAP64(n)       (as_ulong(as_uchar8(n).s76543210))
-//#else
-//        #if gpu_nvidia(DEVICE_INFO)
-//            #pragma OPENCL EXTENSION cl_nv_pragma_unroll : enable
-//        #endif
+#if gpu_amd_64(DEVICE_INFO)
+        #pragma OPENCL EXTENSION cl_amd_media_ops : enable
+        #define ror(x, n)       amd_bitalign(x, x, (uint64_t) n)
+        #define Ch(x, y, z)     amd_bytealign(x, y, z)
+        #define Maj(x, y, z)    amd_bytealign(z ^ x, y, x )
+        #define SWAP64(n)       (as_ulong(as_uchar8(n).s76543210))
+#elif gpu_amd(DEVICE_INFO)
+        #define Ch(x,y,z)       bitselect(z, y, x)
+        #define Maj(x,y,z)      bitselect(x, y, z ^ x)
+        #define ror(x, n)       rotate(x, (uint64_t) 64-n)
+        #define SWAP64(n)       (as_ulong(as_uchar8(n).s76543210))
+#else
+        #if gpu_nvidia(DEVICE_INFO)
+            #pragma OPENCL EXTENSION cl_nv_pragma_unroll : enable
+        #endif
         #define Ch(x,y,z)       ((x & y) ^ ( (~x) & z))
         #define Maj(x,y,z)      ((x & y) ^ (x & z) ^ (y & z))
         #define ror(x, n)       ((x >> n) | (x << (64-n)))
         #define SWAP64(n)       SWAP(n)
-//#endif
+#endif
 #define Sigma0(x)               ((ror(x,28)) ^ (ror(x,34)) ^ (ror(x,39)))
 #define Sigma1(x)               ((ror(x,14)) ^ (ror(x,18)) ^ (ror(x,41)))
 #define sigma0(x)               ((ror(x,1))  ^ (ror(x,8))  ^ (x>>7))
@@ -128,9 +128,9 @@ typedef struct {
     uint32_t                    total;
     uint32_t                    buflen;
     buffer_64                   buffer[16];     //1024bits
-//#if cpu(DEVICE_INFO)
+#if cpu(DEVICE_INFO)
     uint64_t                    safety_trail;   //To avoid memory override
-//#endif
+#endif
 } sha512_ctx;
 
 typedef struct {
