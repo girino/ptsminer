@@ -166,8 +166,6 @@ OpenCLMain::OpenCLMain() {
 	for (int i = 0; i < num_platforms; i++) {
 		platforms.push_back(new OpenCLPlatform(all_platforms[i]));
 	}
-	// list all devices
-	listDevices();
 }
 
 OpenCLMain::~OpenCLMain() {

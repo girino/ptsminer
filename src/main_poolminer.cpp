@@ -12,6 +12,7 @@
 
 #include "main_poolminer.h"
 #include "CProtoshareProcessor.h"
+#include "OpenCLObjects.h"
 
 #if defined(__GNUG__) && !defined(__MINGW32__) && !defined(__MINGW64__) &&!defined(__CYGWIN__)
 #include <sys/syscall.h>
@@ -24,6 +25,9 @@
 #define VERSION_MAJOR 0
 #define VERSION_MINOR 7
 #define VERSION_EXT "RC2 <experimental>"
+#define GVERSION_MAJOR 0
+#define GVERSION_MINOR 2
+#define GVERSION_EXT "Alpha 2 <experimental>"
 
 #define MAX_THREADS 64
 
@@ -558,6 +562,15 @@ int getArgInt(int argc, char **argv, std::string name, int def) {
 	return def;
 }
 
+bool getArgBoolean(int argc, char **argv, std::string name) {
+	for(int i = 0; i < argc; i++) {
+		if (name == std::string(argv[i])) {
+			return true;
+		}
+	}
+	return false;
+}
+
 std::vector<int> getArgVector(int argc, char **argv, std::string name) {
 	std::vector<int> ret;
 	for(int i = 0; i < argc-1; i++) {
@@ -601,8 +614,12 @@ void print_help(const char* _exec) {
 	std::cerr << "\t\tsph --> use SPHLIB" << std::endl;
 	std::cerr << "\t\tgpu --> use GPU (remember to specify the devices with -device)" << std::endl;
 	std::cerr << std::endl;
-	std::cerr << "example:" << std::endl;
+	std::cerr << "examples:" << std::endl;
 	std::cerr << "> " << _exec << " -u PkyeQNn1yGV5psGeZ4sDu6nz2vWHTujf4h -t 4 -m 25 -a sse4" << std::endl;
+	std::cerr << "> " << _exec << " -u PkyeQNn1yGV5psGeZ4sDu6nz2vWHTujf4h -device 1,2,5 -m 28 -a gpu" << std::endl;
+	std::cerr << std::endl;
+	std::cerr << "To list available GPU devices:" << std::endl;
+	std::cerr << "> " << _exec << " -list-devices" << std::endl;
 }
 
 /*********************************
@@ -610,19 +627,19 @@ void print_help(const char* _exec) {
 *********************************/
 int main(int argc, char **argv)
 {
-	std::cout << "********************************************" << std::endl;
-	std::cout << "*** ptsminer - Pts Pool Miner v" << VERSION_MAJOR << "." << VERSION_MINOR << " " << VERSION_EXT << std::endl;
+	std::cout << "*******************************************************" << std::endl;
+	std::cout << "*** GPU PTS miner by girino v" << GVERSION_MAJOR << "." << GVERSION_MINOR << " " << GVERSION_EXT << std::endl;
+	std::cout << "*** based on Pts Pool Miner v" << VERSION_MAJOR << "." << VERSION_MINOR << " " << VERSION_EXT << std::endl;
 	std::cout << "*** by xolokram/TB - www.beeeeer.org - glhf" << std::endl;
 	std::cout << "*** " << std::endl;
-	std::cout << "*** performance improvements by girino " << std::endl;
+	std::cout << "*** GPU support and performance improvements by girino " << std::endl;
 	std::cout << "***    if you like, donate:  " << std::endl;
 	std::cout << "***    PTS: PkyeQNn1yGV5psGeZ4sDu6nz2vWHTujf4h  " << std::endl;
 	std::cout << "***    BTC: 1GiRiNoKznfGbt8bkU1Ley85TgVV7ZTXce  " << std::endl;
-	//std::cout << "*** thanks to jh00, testix & Co." << std::endl; //...for no transactions in the network? pff!
 	std::cout << "*** thanks to wjchen for SSE4 improvements." << std::endl;
 	std::cout << "***" << std::endl;
 	std::cout << "*** press CTRL+C to exit" << std::endl;
-	std::cout << "********************************************" << std::endl;
+	std::cout << "*******************************************************" << std::endl;
 	
 	// init everything:
 	socket_to_server = NULL;
@@ -636,6 +653,13 @@ int main(int argc, char **argv)
 	pool_port = getArgStr(argc, argv, "-q", "1337");
 	std::string mode_param = getArgStr(argc, argv, "-a", "auto");
 	deviceList = getArgVector(argc, argv, "-device");
+	bool list_devices_and_quit = getArgBoolean(argc, argv, "-list-devices");
+
+	if (list_devices_and_quit) {
+		printf("Available devices:\n");
+		OpenCLMain::getInstance().listDevices();
+		return EXIT_SUCCESS;
+	}
 
 	if (pool_username == "")
 	{
@@ -697,6 +721,8 @@ int main(int argc, char **argv)
 	}
 
 	if (use_gpu) {
+		printf("Available devices:\n");
+		OpenCLMain::getInstance().listDevices();
 		if (deviceList.empty()) {
 			for (int i = 0; i < thread_num_max; i++) {
 				deviceList.push_back(i);
