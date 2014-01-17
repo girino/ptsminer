@@ -37,6 +37,7 @@ bool use_sphlib;
 bool use_gpu;
 int gpu_ver;
 std::vector<int> deviceList;
+std::vector<CProtoshareProcessorGPU *> gpu_processors;
 size_t thread_num_max;
 static size_t fee_to_pay;
 static size_t miner_id;
@@ -178,7 +179,7 @@ public:
 		if (shamode != GPU)
 			processor = new CProtoshareProcessor(shamode, collisionTableBits, _id);
 		else
-			processor = new CProtoshareProcessorGPU(shamode, gpu_ver, collisionTableBits, _id, deviceList[_id]);
+			processor = gpu_processors[_id];
 
 		while (running) {
 			if (orgblock != _bprovider->getOriginalBlock()) {
@@ -743,6 +744,17 @@ int main(int argc, char **argv)
 		std::stringstream ss;
 		ss << std::setw(5) << std::setfill('0') << std::hex << (pw[0] ^ pw[5] ^ pw[2] ^ pw[7]) << (pw[4] ^ pw[1] ^ pw[6] ^ pw[3]);
 		pool_password = ss.str();	
+	}
+
+	// preinits GPU processors
+	if (use_gpu) {
+		printf("Initializing GPU...\n");
+		for (int i = 0; i < deviceList.size(); i++) {
+			printf("Initing device %d.\n", i);
+			gpu_processors.push_back(new CProtoshareProcessorGPU(GPU, gpu_ver, collision_table_bits, i, deviceList[i]));
+			printf("Device %d Inited.\n", i);
+		}
+		printf("All GPUs Initialized...\n");
 	}
 
 	// ok, start mining:

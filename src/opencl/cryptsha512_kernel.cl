@@ -12,7 +12,10 @@
  *
  * This program comes with ABSOLUTELY NO WARRANTY; express or implied .
  */
-
+#ifdef _ECLIPSE_OPENCL_HEADER
+#   include "OpenCLKernel.hpp"
+#   include "opencl_cryptsha512.h"
+#endif
 #define _OPENCL_COMPILER
 
 __constant uint64_t k[] = {
