@@ -118,6 +118,7 @@ xLDFLAGS=$(LDHARDENING) $(LDFLAGS)
 OBJS= \
 	obj/cpuid.o \
 	obj/sha512_avx.o \
+	obj/sha512_avx2.o \
 	obj/sha512_sse4.o \
 	obj/sha512.o \
 	obj/sph_sha2.o \
@@ -147,6 +148,8 @@ obj/%.o: %.c
 
 obj/%.o: intel/%.asm
 	yasm -f $(YASMOUTPUT) -o $@ $<
+obj/%.o: intel/%.S
+	$(CXX) -c -o $@ $<
 
 ptsminer: $(OBJS:obj/%=obj/%)
 	$(CXX) $(xLDFLAGS) -o $@ $(LIBPATHS) $^ $(LIBS) -lOpenCL
