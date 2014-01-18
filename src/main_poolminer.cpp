@@ -27,6 +27,7 @@
 #define VERSION_EXT "RC2 <experimental>"
 #define GVERSION_MAJOR 0
 #define GVERSION_MINOR 2
+#define GVERSION_BUILD 1
 #define GVERSION_EXT "Alpha 2 <experimental>"
 
 #define MAX_THREADS 64
@@ -627,8 +628,8 @@ void print_help(const char* _exec) {
 *********************************/
 int main(int argc, char **argv)
 {
-	std::cout << "*******************************************************" << std::endl;
-	std::cout << "*** GPU PTS miner by girino v" << GVERSION_MAJOR << "." << GVERSION_MINOR << " " << GVERSION_EXT << std::endl;
+	std::cout << "*********************************************************" << std::endl;
+	std::cout << "*** GPU PTS miner by girino v" << GVERSION_MAJOR << "." << GVERSION_MINOR << "." << GVERSION_BUILD << " " << GVERSION_EXT << std::endl;
 	std::cout << "*** based on Pts Pool Miner v" << VERSION_MAJOR << "." << VERSION_MINOR << " " << VERSION_EXT << std::endl;
 	std::cout << "*** by xolokram/TB - www.beeeeer.org - glhf" << std::endl;
 	std::cout << "*** " << std::endl;
@@ -639,7 +640,7 @@ int main(int argc, char **argv)
 	std::cout << "*** thanks to wjchen for SSE4 improvements." << std::endl;
 	std::cout << "***" << std::endl;
 	std::cout << "*** press CTRL+C to exit" << std::endl;
-	std::cout << "*******************************************************" << std::endl;
+	std::cout << "*********************************************************" << std::endl;
 	
 	// init everything:
 	socket_to_server = NULL;

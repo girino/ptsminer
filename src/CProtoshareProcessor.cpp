@@ -19,6 +19,8 @@
 #include "OpenCLMomentumV5.h"
 #include "OpenCLMomentum2.h"
 #include "global.h"
+#include <sys/mman.h>
+
 
 #define repeat2(x) {x} {x}
 #define repeat4(x) repeat2(x) repeat2(x)
@@ -203,17 +205,21 @@ void _protoshares_process_V1(blockHeader_t* block,  CBlockProvider* bp,
         uint64_t resultHashStorage[8*CACHED_HASHES];
         memcpy(tempHash+4, midHash, 32);
 
+		#pragma unroll (8388608) //MAX_MOMENTUM_NONCE/BIRTHDAYS_PER_HASH
         for(uint32_t n=0; n<MAX_MOMENTUM_NONCE; n += BIRTHDAYS_PER_HASH * CACHED_HASHES)
         {
+				#pragma unroll (CACHED_HASHES)
                 for(uint32_t m=0; m<CACHED_HASHES; m++)
                 {
                         *(uint32_t*)tempHash = n+m*8;
                         SHA512_FUNC(tempHash, 32+4, (unsigned char*)(resultHashStorage+8*m));
                 }
+				#pragma unroll (CACHED_HASHES)
                 for(uint32_t m=0; m<CACHED_HASHES; m++)
                 {
                         uint64_t* resultHash = resultHashStorage + 8*m;
                         uint32_t i = n + m*8;
+						#pragma unroll (8)
                         for(uint32_t f=0; f<8; f++)
                         {
                                 uint64_t birthdayB = resultHash[f] >> (64ULL-SEARCH_SPACE_BITS);
@@ -701,6 +707,60 @@ void _protoshares_process_V5(blockHeader_t* block,  CBlockProvider* bp,
 #endif
 }
 
+template<int COLLISION_TABLE_SIZE, sha512_func_t SHA512_FUNC>
+void _protoshares_process_V6(blockHeader_t* block,  CBlockProvider* bp,
+		uint32_t* collisionIndices, unsigned int thread_id)
+{
+        // generate mid hash using sha256 (header hash)
+		blockHeader_t* ob = bp->getOriginalBlock();
+        uint8_t midHash[32];
+        uint32_t hashes_stored=0;
+
+		{
+			//SPH
+			sph_sha256_context c256;
+			sph_sha256_init(&c256);
+			sph_sha256(&c256, (unsigned char*)block, 80);
+			sph_sha256_close(&c256, midHash);
+			sph_sha256_init(&c256);
+			sph_sha256(&c256, (unsigned char*)midHash, 32);
+			sph_sha256_close(&c256, midHash);
+		}
+        memset(collisionIndices, 0x00, sizeof(uint32_t)*COLLISION_TABLE_SIZE);
+        // start search
+        uint8_t tempHash[32+4];
+        uint64_t resultHash[8];
+        memcpy(tempHash+4, midHash, 32);
+
+#pragma unroll (8388608) //MAX_MOMENTUM_NONCE/BIRTHDAYS_PER_HASH
+        for(uint32_t n=0; n<MAX_MOMENTUM_NONCE; n += BIRTHDAYS_PER_HASH)
+        {
+        		*(uint32_t*)tempHash = n;
+                SHA512_FUNC(tempHash, 32+4, (unsigned char*)resultHash);
+#pragma unroll (8)
+                for(uint32_t f=0; f<8; f++) {
+					uint64_t birthdayB = resultHash[f] >> (64ULL-SEARCH_SPACE_BITS);
+					uint64_t birthday = birthdayB & (COLLISION_TABLE_SIZE-1);
+					__builtin_prefetch(&collisionIndices[birthday]);
+                }
+#pragma unroll (8)
+                for(uint32_t f=0; f<8; f++)
+				{
+						uint64_t birthdayB = resultHash[f] >> (64ULL-SEARCH_SPACE_BITS);
+						uint32_t collisionKey = (uint32_t)((birthdayB>>18) & COLLISION_KEY_MASK);
+						uint64_t birthday = birthdayB & (COLLISION_TABLE_SIZE-1);
+						if( ((collisionIndices[birthday]&COLLISION_KEY_MASK) == collisionKey)) {
+							// try to avoid submitting bad shares
+							if (ob != bp->getOriginalBlock()) return;
+							protoshares_revalidateCollision(block, midHash, (collisionIndices[birthday]&~COLLISION_KEY_MASK)*8, n+f, birthdayB, bp, SHA512_FUNC, thread_id);
+							// invalid collision -> ignore or mark this entry as invalid?
+						} else {
+							collisionIndices[birthday] = (n/8) | collisionKey; // we have 6 bits available for validation
+						}
+				}
+        }
+}
+
 
 void sha512_func_debug(unsigned char* in, unsigned int size, unsigned char* out) {
 
@@ -733,7 +793,22 @@ CProtoshareProcessor::CProtoshareProcessor(SHAMODE _shamode,
 	thread_id = _thread_id;
 
 	// allocate collision table
+#ifndef MAP_HUGETLB
 	collisionIndices = (uint32_t*)malloc(sizeof(uint32_t)*(1<<collisionTableBits));
+#else
+
+			size_t bigbufsize = sizeof(uint32_t)*(1 << collisionTableBits);
+			void *addr;
+			addr = mmap(0, bigbufsize, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS|MAP_HUGETLB, 0, 0);
+			if (addr == MAP_FAILED) {
+                          printf("Couldn't use the hugepage speed optimization.  Enable huge pages for a slight speed boost.\n");
+                          collisionIndices = (uint32_t*)malloc(sizeof(uint32_t)*(1 << collisionTableBits));
+			} else {
+			  madvise(addr, bigbufsize, MADV_RANDOM);
+			  collisionIndices = (uint32_t *)addr;
+			}
+
+#endif
 }
 
 CProtoshareProcessor::~CProtoshareProcessor() {

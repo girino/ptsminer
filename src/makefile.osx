@@ -6,8 +6,8 @@
 # Mac OS X makefile for bitcoin
 # Originally by Laszlo Hanyecz (solar@heliacal.net)
 
-#CXX=g++
-#CC=gcc
+CXX=llvm-g++
+CC=llvm-gcc
 
 DEPSDIR=/opt/local
 
