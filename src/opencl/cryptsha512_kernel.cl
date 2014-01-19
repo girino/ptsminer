@@ -111,7 +111,7 @@ void sha512_block(sha512_ctx * ctx) {
     ctx->H[7] += h;
 }
 
-void insert_to_buffer(sha512_ctx    * ctx,
+void insert_to_buffer_global(sha512_ctx    * ctx,
                       global const uint8_t * string,
                       const uint32_t len) {
     uint8_t *d;
@@ -123,8 +123,36 @@ void insert_to_buffer(sha512_ctx    * ctx,
     ctx->buflen += len;
 }
 
-void ctx_update(sha512_ctx * ctx,
+void insert_to_buffer(sha512_ctx    * ctx,
+        const uint8_t * string,
+        const uint32_t len) {
+uint8_t *d;
+d = ctx->buffer->mem_08 + ctx->buflen;  //ctx->buffer[buflen] (in char size)
+
+for (uint32_t i = 0; i < len; i++)
+PUTCHAR(d, i, GETCHAR(string, i));
+
+ctx->buflen += len;
+}
+
+void ctx_update_global(sha512_ctx * ctx,
                 global uint8_t    * string, uint32_t len) {
+
+    ctx->total += len;
+    uint32_t startpos = ctx->buflen;
+
+    insert_to_buffer_global(ctx, string, (startpos + len <= 128 ? len : 128 - startpos));
+
+    if (ctx->buflen == 128) {
+        sha512_block(ctx);
+        ctx->buflen = 0;
+        uint32_t offset = 128 - startpos;
+        insert_to_buffer_global(ctx, (string + offset), len - offset);
+    }
+}
+
+void ctx_update(sha512_ctx * ctx,
+                uint8_t    * string, uint32_t len) {
 
     ctx->total += len;
     uint32_t startpos = ctx->buflen;

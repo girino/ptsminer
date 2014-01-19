@@ -35,7 +35,7 @@ kernel void kernel_sha512(global char * message,
     sha512_ctx sctx;	
     init_ctx(&sctx);
     ctx_update(&sctx, &nonce, 4);
-    ctx_update(&sctx, message, 32);
+    ctx_update_global(&sctx, message, 32);
     uint64_t hash[8];
     sha512_digest(&sctx, hash);
     
@@ -54,7 +54,7 @@ kernel void kernel_sha512(global char * message,
 				uint64_t hashA[8];
 			    init_ctx(&sctx);
 			    ctx_update(&sctx, &nonceA, 4);
-			    ctx_update(&sctx, message, 32);
+			    ctx_update_global(&sctx, message, 32);
 			    sha512_digest(&sctx, hashA);
 				#pragma unroll 8
 				for (int j = 0; j < 8; j++) {

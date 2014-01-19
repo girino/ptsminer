@@ -35,8 +35,8 @@ kernel void calculate_all_hashes(global char * message,
 
     sha512_ctx sctx;
     init_ctx(&sctx);
-    ctx_update(&sctx, &nonce, 4);
-    ctx_update(&sctx, message, 32);
+    ctx_update(&sctx, (uint8_t*)&nonce, 4);
+    ctx_update_global(&sctx, message, 32);
     sha512_digest_global(&sctx, hashes+nonce);
 }
 // second pass, fill table
