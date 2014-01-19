@@ -66,9 +66,11 @@ void sha512_block(sha512_ctx * ctx) {
     uint64_t t1, t2;
     uint64_t w[16];
 
+	#pragma unroll 16
     for (int i = 0; i < 16; i++)
         w[i] = SWAP64(ctx->buffer->mem_64[i]);
 
+	#pragma unroll 16
     for (int i = 0; i < 16; i++) {
         t1 = k[i] + w[i] + h + Sigma1(e) + Ch(e, f, g);
         t2 = Maj(a, b, c) + Sigma0(a);
@@ -83,6 +85,7 @@ void sha512_block(sha512_ctx * ctx) {
         a = t1 + t2;
     }
 
+	#pragma unroll 64
     for (int i = 16; i < 80; i++) {
         w[i & 15] = sigma1(w[(i - 2) & 15]) + sigma0(w[(i - 15) & 15]) + w[(i - 16) & 15] + w[(i - 7) & 15];
         t1 = k[i] + w[i & 15] + h + Sigma1(e) + Ch(e, f, g);
@@ -109,7 +112,7 @@ void sha512_block(sha512_ctx * ctx) {
 }
 
 void insert_to_buffer(sha512_ctx    * ctx,
-                      const uint8_t * string,
+                      global const uint8_t * string,
                       const uint32_t len) {
     uint8_t *d;
     d = ctx->buffer->mem_08 + ctx->buflen;  //ctx->buffer[buflen] (in char size)
@@ -121,7 +124,7 @@ void insert_to_buffer(sha512_ctx    * ctx,
 }
 
 void ctx_update(sha512_ctx * ctx,
-                uint8_t    * string, uint32_t len) {
+                global uint8_t    * string, uint32_t len) {
 
     ctx->total += len;
     uint32_t startpos = ctx->buflen;
@@ -171,6 +174,7 @@ void finish_ctx(sha512_ctx * ctx) {
 
 void clear_ctx_buffer(sha512_ctx * ctx) {
 
+	#pragma unroll 16
     for (int i = 0; i < 16; i++)
         ctx->buffer->mem_64[i] = 0;
 
@@ -199,6 +203,34 @@ void sha512_digest(sha512_ctx * ctx,
     }
     sha512_block(ctx);
 
+	#pragma unroll 8
+    for (int i = 0; i < 8; i++)
+        result[i] = SWAP64(ctx->H[i]);
+}
+
+void sha512_digest_global(sha512_ctx * ctx,
+                   __global uint64_t   * result) {
+
+    if (ctx->buflen <= 111) { //data+0x80+datasize fits in one 1024bit block
+        finish_ctx(ctx);
+
+    } else {
+        bool moved = true;
+
+        if (ctx->buflen < 128) { //data and 0x80 fits in one block
+            ctx_append_1(ctx);
+            moved = false;
+        }
+        sha512_block(ctx);
+        clear_ctx_buffer(ctx);
+
+        if (moved) //append 1,the rest is already clean
+            PUTCHAR(ctx->buffer->mem_08, 0, 0x80);
+        ctx_add_length(ctx);
+    }
+    sha512_block(ctx);
+
+	#pragma unroll 8
     for (int i = 0; i < 8; i++)
         result[i] = SWAP64(ctx->H[i]);
 }

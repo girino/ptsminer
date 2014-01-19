@@ -37,18 +37,16 @@ kernel void kernel_sha512(global char * message,
 	size_t id = get_local_id(0);
 	size_t gid = get_group_id(0) * get_local_size(0);
 	uint32_t nonce = (gid*8) + (id*8);
-	char tempHash[36];
-	for (int i = 0; i < 32; i++) tempHash[i+4] = message[i];
-	*((uint32_t*)tempHash) = nonce;
 	
     sha512_ctx sctx;	
     init_ctx(&sctx);
-    ctx_update(&sctx, tempHash, 36);
+    ctx_update(&sctx, &nonce, 4);
+    ctx_update(&sctx, message, 32);
     uint64_t hash[8];
     sha512_digest(&sctx, hash);
     
     // pra cada hash
-	#pragma unroll
+	#pragma unroll 8
     for (int i = 0; i < 8; i++) {
 	    // checks in the hash table
 		unsigned long birthdayB = GET_BIRTHDAY(hash[i]);
