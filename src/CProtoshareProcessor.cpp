@@ -956,9 +956,9 @@ CProtoshareProcessor::~CProtoshareProcessor() {
 
 void CProtoshareProcessor::protoshares_process(blockHeader_t* block,
 		CBlockProvider* bp) {
-#define process_func _protoshares_process_V6
 	if (shamode == AVXSSE4) {
 #define sha_func_to_use sha512_func_avx
+#define process_func _protoshares_process_V6
 		switch (collisionTableBits) {
 			case 20: process_func<(1<<20),sha_func_to_use>(block, bp, collisionIndices, thread_id); break;
 			case 21: process_func<(1<<21),sha_func_to_use>(block, bp, collisionIndices, thread_id); break;
@@ -972,9 +972,11 @@ void CProtoshareProcessor::protoshares_process(blockHeader_t* block,
 			case 29: process_func<(1<<29),sha_func_to_use>(block, bp, collisionIndices, thread_id); break;
 			case 30: process_func<(1<<30),sha_func_to_use>(block, bp, collisionIndices, thread_id); break;
 		}
+#undef process_func
 #undef sha_func_to_use
 	} else if (shamode == SPHLIB) {
 #define sha_func_to_use sha512_func_sph
+#define process_func _protoshares_process_V5
 		switch (collisionTableBits) {
 			case 20: process_func<(1<<20),sha_func_to_use>(block, bp, collisionIndices, thread_id); break;
 			case 21: process_func<(1<<21),sha_func_to_use>(block, bp, collisionIndices, thread_id); break;
