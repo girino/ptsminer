@@ -40,7 +40,7 @@ public:
 class CProtoshareProcessorGPU : public CProtoshareProcessor {
 public:
 	CProtoshareProcessorGPU(SHAMODE _shamode,
-			int gpu_ver,
+			GPUALGO gpu_ver,
 			unsigned int _collisionTableBits,
 			unsigned int _thread_id,
 			unsigned int _device_num);

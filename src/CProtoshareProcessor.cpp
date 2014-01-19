@@ -17,6 +17,7 @@
 #include "OpenCLMomentumV3.h"
 #include "OpenCLMomentumV4.h"
 #include "OpenCLMomentumV5.h"
+#include "OpenCLMomentumV4a.h"
 #include "OpenCLMomentum2.h"
 #include "global.h"
 #include <sys/mman.h>
@@ -1011,16 +1012,18 @@ void CProtoshareProcessor::protoshares_process(blockHeader_t* block,
 }
 
 CProtoshareProcessorGPU::CProtoshareProcessorGPU(SHAMODE _shamode,
-		int gpu_algorithm, unsigned int _collisionTableBits,
+		GPUALGO gpu_algorithm, unsigned int _collisionTableBits,
 		unsigned int _thread_id, unsigned int _device_num) {
-	if (gpu_algorithm == 2) {
+	if (gpu_algorithm == GPUV2) {
 		M1 = new OpenCLMomentum2(_collisionTableBits, _device_num);
-	} else if (gpu_algorithm == 3) {
+	} else if (gpu_algorithm == GPUV3) {
 		M1 = new OpenCLMomentumV3(_collisionTableBits, _device_num);
-	} else if (gpu_algorithm == 4) {
+	} else if (gpu_algorithm == GPUV4) {
 		M1 = new OpenCLMomentumV4(_collisionTableBits, _device_num);
-	} else if (gpu_algorithm == 5) {
+	} else if (gpu_algorithm == GPUV5) {
 		M1 = new OpenCLMomentumV5(_collisionTableBits, _device_num);
+	} else if (gpu_algorithm == GPUV4A) {
+		M1 = new OpenCLMomentumV4a(_collisionTableBits, _device_num);
 	} else {
 		assert(gpu_algorithm <= 4 && gpu_algorithm >= 2);
 	}

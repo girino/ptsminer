@@ -40,7 +40,7 @@ int collision_table_bits;
 bool use_avxsse4;
 bool use_sphlib;
 bool use_gpu;
-int gpu_ver;
+GPUALGO gpu_ver;
 std::vector<int> deviceList;
 std::vector<CProtoshareProcessorGPU *> gpu_processors;
 size_t thread_num_max;
@@ -687,11 +687,12 @@ int main(int argc, char **argv)
 		std::cout << "using GPU" << std::endl;
 		use_gpu = true;
 		use_sphlib = true;
-		gpu_ver = 4;
-		if (mode_param == "gpuv2") gpu_ver = 2;
-		else if (mode_param == "gpuv3") gpu_ver = 3;
-		else if (mode_param == "gpuv4") gpu_ver = 4;
-		else if (mode_param == "gpuv5") gpu_ver = 5;
+		gpu_ver = GPUV4;
+		if (mode_param == "gpuv2") gpu_ver = GPUV2;
+		else if (mode_param == "gpuv3") gpu_ver = GPUV3;
+		else if (mode_param == "gpuv4") gpu_ver = GPUV4;
+		else if (mode_param == "gpuv5") gpu_ver = GPUV5;
+		else if (mode_param == "gpuv4a") gpu_ver = GPUV4A;
 	} else {
 #ifdef	__x86_64__
 		std::cout << "**" << "SSE4/AVX auto-detection" << std::endl;
