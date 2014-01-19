@@ -71,6 +71,27 @@ OpenCLMomentumV4::OpenCLMomentumV4(int _HASH_BITS, int _device_num) {
 	hash_table = context->createBuffer(sizeof(uint32_t)*(1<<HASH_BITS), CL_MEM_READ_WRITE, NULL);
 	collisions = context->createBuffer(sizeof(collision_struct)*getCollisionCeiling(), CL_MEM_WRITE_ONLY, NULL);
 	collisions_count = context->createBuffer(sizeof(size_t), CL_MEM_READ_WRITE, NULL);
+
+	// prepare arguments
+	kernel_cleanup->resetArgs();
+	kernel_cleanup->addGlobalArg(hash_table);
+
+	kernel_calculate_all_hashes->resetArgs();
+	kernel_calculate_all_hashes->addGlobalArg(cl_message);
+	kernel_calculate_all_hashes->addGlobalArg(hashes);
+
+	kernel_fill_table->resetArgs();
+	kernel_fill_table->addGlobalArg(hashes);
+	kernel_fill_table->addGlobalArg(hash_table);
+	uint32_t ht_size = 1<<HASH_BITS;
+	kernel_fill_table->addScalarUInt(ht_size);
+
+	kernel_find_collisions->resetArgs();
+	kernel_find_collisions->addGlobalArg(hashes);
+	kernel_find_collisions->addGlobalArg(hash_table);
+	kernel_find_collisions->addScalarUInt(ht_size);
+	kernel_find_collisions->addGlobalArg(collisions);
+	kernel_find_collisions->addGlobalArg(collisions_count);
 }
 
 OpenCLMomentumV4::~OpenCLMomentumV4() {
@@ -102,8 +123,6 @@ void OpenCLMomentumV4::find_collisions(uint8_t* message, collision_struct* out_b
 	OpenCLDevice * device = OpenCLMain::getInstance().getDevice(device_num);
 
 	// cleans up the hash table
-	kernel_cleanup->resetArgs();
-	kernel_cleanup->addGlobalArg(hash_table);
 	size_t kc_wgsize = kernel_cleanup->getWorkGroupSize(device);
 	kc_wgsize = 1<<log2(kc_wgsize);
 	queue->enqueueKernel1D(kernel_cleanup, 1<<HASH_BITS, kc_wgsize);
@@ -113,9 +132,6 @@ void OpenCLMomentumV4::find_collisions(uint8_t* message, collision_struct* out_b
 
 	queue->enqueueWriteBuffer(cl_message, message, sizeof(uint8_t)*32);
 	// step 1, calculate hashes
-	kernel_calculate_all_hashes->resetArgs();
-	kernel_calculate_all_hashes->addGlobalArg(cl_message);
-	kernel_calculate_all_hashes->addGlobalArg(hashes);
 	size_t kcah_wgsize = kernel_calculate_all_hashes->getWorkGroupSize(device);
 	kcah_wgsize = 1<<log2(kcah_wgsize);
 	queue->enqueueKernel1D(kernel_calculate_all_hashes, MAX_MOMENTUM_NONCE/8,
@@ -125,10 +141,6 @@ void OpenCLMomentumV4::find_collisions(uint8_t* message, collision_struct* out_b
 //	queue->finish();
 
 	// step 2, populate hashtable
-	kernel_fill_table->resetArgs();
-	kernel_fill_table->addGlobalArg(hashes);
-	kernel_fill_table->addGlobalArg(hash_table);
-	kernel_fill_table->addScalarUInt(ht_size);
 	size_t kft_wgsize = kernel_fill_table->getWorkGroupSize(device);
 	kft_wgsize = 1<<log2(kft_wgsize);
 	queue->enqueueKernel1D(kernel_fill_table, MAX_MOMENTUM_NONCE,
@@ -139,12 +151,6 @@ void OpenCLMomentumV4::find_collisions(uint8_t* message, collision_struct* out_b
 
 	queue->enqueueWriteBuffer(collisions_count, out_count, sizeof(size_t));
 	// step 3, find collisions
-	kernel_find_collisions->resetArgs();
-	kernel_find_collisions->addGlobalArg(hashes);
-	kernel_find_collisions->addGlobalArg(hash_table);
-	kernel_find_collisions->addScalarUInt(ht_size);
-	kernel_find_collisions->addGlobalArg(collisions);
-	kernel_find_collisions->addGlobalArg(collisions_count);
 	size_t kfc_wgsize = kernel_find_collisions->getWorkGroupSize(device);
 	kfc_wgsize = 1<<log2(kfc_wgsize);
 	queue->enqueueKernel1D(kernel_find_collisions, MAX_MOMENTUM_NONCE,
