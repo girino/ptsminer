@@ -67,6 +67,19 @@ OpenCLMomentumV3::OpenCLMomentumV3(int _HASH_BITS, int _device_num) {
 	internal_hash_table = context->createBuffer(sizeof(uint32_t)*(1<<HASH_BITS), CL_MEM_READ_WRITE, NULL);
 	temp_collisions = context->createBuffer(sizeof(collision_struct)*getCollisionCeiling(), CL_MEM_WRITE_ONLY, NULL);
 	temp_collisions_count = context->createBuffer(sizeof(size_t), CL_MEM_READ_WRITE, NULL);
+
+	// sets args
+	kernel_cleanup->resetArgs();
+	kernel_cleanup->addGlobalArg(internal_hash_table);
+
+	kernel->resetArgs();
+	kernel->addGlobalArg(cl_message);
+	kernel->addGlobalArg(internal_hash_table);
+	uint32_t ht_size = 1<<HASH_BITS;
+	kernel->addScalarUInt(ht_size);
+	kernel->addGlobalArg(temp_collisions);
+	kernel->addGlobalArg(temp_collisions_count);
+
 }
 
 OpenCLMomentumV3::~OpenCLMomentumV3() {
@@ -104,17 +117,7 @@ void OpenCLMomentumV3::find_collisions(uint8_t* message, collision_struct* colli
 //	printf("BLOCKSIZE_CLEAN = %ld\n", BLOCKSIZE_CLEAN);
 
 	// cleans up the hash table
-	kernel_cleanup->resetArgs();
-	kernel_cleanup->addGlobalArg(internal_hash_table);
 	queue->enqueueKernel1D(kernel_cleanup, 1<<HASH_BITS, BLOCKSIZE_CLEAN);
-
-	kernel->resetArgs();
-	kernel->addGlobalArg(cl_message);
-	kernel->addGlobalArg(internal_hash_table);
-	uint32_t ht_size = 1<<HASH_BITS;
-	kernel->addScalarUInt(ht_size);
-	kernel->addGlobalArg(temp_collisions);
-	kernel->addGlobalArg(temp_collisions_count);
 
 	queue->enqueueWriteBuffer(cl_message, message, sizeof(uint8_t)*32);
 	queue->enqueueWriteBuffer(temp_collisions_count, collision_count, sizeof(size_t));
