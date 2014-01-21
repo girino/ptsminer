@@ -41,7 +41,7 @@ kernel void calculate_all_hashes(constant char * message,
 
 	#pragma unroll
 	for (int i = 0; i < 32; i++) tempHashes[local_temp_idx+i+4] = message[i];
-	*((uint32_t*)tempHashes+local_temp_idx) = nonce;
+	*((uint32_t*)(tempHashes+local_temp_idx)) = nonce;
 
     init_ctx(local_ctx+lid);
     ctx_update(local_ctx+lid, tempHashes+local_temp_idx, 36);
