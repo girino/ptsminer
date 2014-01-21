@@ -129,6 +129,7 @@ OBJS= \
 	obj/OpenCLMomentumV3.o \
 	obj/OpenCLMomentumV4.o \
 	obj/OpenCLMomentumV5.o \
+	obj/OpenCLMomentumV4_AMD.o \
 	obj/OpenCLObjects.o \
 	obj/sha_utils.o \
 	obj/fileutils.o \
