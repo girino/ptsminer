@@ -9,6 +9,8 @@
 
 #ifdef _ECLIPSE_OPENCL_HEADER
 #   include "OpenCLKernel.hpp"
+#   include "opencl_cryptsha512.h"
+#   include "cryptsha512_kernel_AMD.cl"
 #endif
 
 #define _OPENCL_COMPILER
@@ -46,6 +48,8 @@ kernel void calculate_all_hashes(constant char * message,
     init_ctx(local_ctx+lid);
     ctx_update(local_ctx+lid, tempHashes+local_temp_idx, 36);
     sha512_digest(local_ctx+lid, local_hashes+local_idx);
+
+    mem_fence(CLK_LOCAL_MEM_FENCE);
 
     hashes[nonce] = local_hashes[local_idx];
     hashes[nonce+1] = local_hashes[local_idx+1];

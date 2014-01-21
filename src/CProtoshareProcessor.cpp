@@ -17,6 +17,7 @@
 #include "OpenCLMomentumV3.h"
 #include "OpenCLMomentumV4.h"
 #include "OpenCLMomentumV4_AMD.h"
+#include "OpenCLMomentumV3_AMD.h"
 #include "OpenCLMomentumV5.h"
 #include "OpenCLMomentum2.h"
 #include "global.h"
@@ -1024,6 +1025,8 @@ CProtoshareProcessorGPU::CProtoshareProcessorGPU(SHAMODE _shamode,
 		M1 = new OpenCLMomentumV5(_collisionTableBits, _device_num);
 	} else if (gpu_algorithm == GPUV4_AMD) {
 		M1 = new OpenCLMomentumV4_AMD(_collisionTableBits, _device_num);
+	} else if (gpu_algorithm == GPUV3_AMD) {
+		M1 = new OpenCLMomentumV3_AMD(_collisionTableBits, _device_num);
 	} else {
 		assert(gpu_algorithm <= 4 && gpu_algorithm >= 2);
 	}

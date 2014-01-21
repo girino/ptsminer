@@ -27,8 +27,8 @@
 									<listOptionValue builtIn="false" value="/opt/local/include"/>
 									<listOptionValue builtIn="false" value="/opt/OpenCL"/>
 								</option>
-								<option id="gnu.cpp.compiler.option.preprocessor.def.83271242" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
-									<listOptionValue builtIn="false" value="_ECLIPSE_OPENCL_HEADER"/>
+								<option id="gnu.cpp.compiler.option.preprocessor.def.83271242" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="_ECLIPSE_OPENCL_HEADER=1"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.985009179" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
@@ -39,7 +39,7 @@
 									<listOptionValue builtIn="false" value="/opt/local/include"/>
 									<listOptionValue builtIn="false" value="/opt/OpenCL"/>
 								</option>
-								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1506913792" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
+								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1506913792" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="_ECLIPSE_OPENCL_HEADER"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1323802131" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
