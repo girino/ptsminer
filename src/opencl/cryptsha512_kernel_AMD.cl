@@ -1,20 +1,22 @@
 /*
- * Developed by Claudio André <claudio.andre at correios.net.br> in 2012
+ * Developed by Claudio Andr <claudio.andre at correios.net.br> in 2012
  * Based on source code provided by Lukas Odzioba
  *
  * More information at http://openwall.info/wiki/john/OpenCL-SHA-512
  *
  * This software is:
  * Copyright (c) 2011 Lukas Odzioba <lukas dot odzioba at gmail dot com>
- * Copyright (c) 2012 Claudio André <claudio.andre at correios.net.br>
+ * Copyright (c) 2012 Claudio Andr <claudio.andre at correios.net.br>
  * and it is hereby released to the general public under the following terms:
  * Redistribution and use in source and binary forms, with or without modification, are permitted.
  *
  * This program comes with ABSOLUTELY NO WARRANTY; express or implied .
  */
-
+#ifdef _ECLIPSE_OPENCL_HEADER
+#   include "OpenCLKernel.hpp"
+#   include "opencl_cryptsha512.h"
+#endif
 #define _OPENCL_COMPILER
-#include "opencl_cryptsha512.h"
 
 __constant uint64_t k[] = {
     0x428a2f98d728ae22UL, 0x7137449123ef65cdUL, 0xb5c0fbcfec4d3b2fUL, 0xe9b5dba58189dbbcUL,

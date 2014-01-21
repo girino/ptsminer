@@ -222,6 +222,12 @@ long OpenCLDevice::getMaxMemAllocSize() {
 	return value;
 }
 
+long OpenCLDevice::getLocalMemSize() {
+	cl_ulong value;
+	check_error(clGetDeviceInfo(my_id, CL_DEVICE_LOCAL_MEM_SIZE, (sizeof(cl_ulong)), &value, NULL));
+	return value;
+}
+
 long OpenCLDevice::getMaxParamSize() {
 	cl_ulong value;
 	check_error(clGetDeviceInfo(my_id, CL_DEVICE_MAX_PARAMETER_SIZE, (sizeof(cl_ulong)), &value, NULL));

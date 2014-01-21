@@ -100,6 +100,7 @@ public:
 	std::string getName();
 	long getMaxWorkGroupSize();
 	long getMaxMemAllocSize();
+	long getLocalMemSize();
 	long getMaxParamSize();
 	int getMaxWorkItemDimensions();
 	std::vector<long> getMaxWorkItemSizes();
