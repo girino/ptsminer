@@ -1035,6 +1035,8 @@ CProtoshareProcessorGPU::CProtoshareProcessorGPU(SHAMODE _shamode,
 	this->thread_id = _thread_id;
 	this->device_num = _device_num;
 	this->collisions = new collision_struct[M1->getCollisionCeiling()];
+
+	Init_SHA512_sse4();
 }
 
 CProtoshareProcessorGPU::~CProtoshareProcessorGPU() {
@@ -1074,7 +1076,7 @@ void CProtoshareProcessorGPU::protoshares_process(blockHeader_t* block,
 	for (int i = 0; i < count_collisions; i++) {
 		protoshares_revalidateCollision(block, midHash, collisions[i].nonce_a,
 				collisions[i].nonce_b, collisions[i].birthday, bp,
-				sha512_func_sph, thread_id);
+				sha512_func_sse4, thread_id);
 	}
 	//printf("DEBUG: collisions = %d\n", count_collisions);
 
