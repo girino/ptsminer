@@ -173,5 +173,5 @@ void OpenCLMomentumV4::find_collisions(uint8_t* message, collision_struct* out_b
 }
 
 int OpenCLMomentumV4::getCollisionCeiling() {
-	return (1<<8);
+	return (1<<20);
 }

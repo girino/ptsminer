@@ -78,15 +78,16 @@ kernel void find_collisions(global uint64_t * hashes,
 	if( ht_value && ((ht_value&COLLISION_KEY_MASK) == collisionKey)) {
 		// collision candidate
 		unsigned int nonceA = (ht_value&~COLLISION_KEY_MASK)<<3;
-		for (int i = 0; i < 8; i++) {
-			unsigned long birthdayA = GET_BIRTHDAY(hashes[nonceA+i]);
-			if (birthdayA == birthdayB && (nonceA+i) != nonce) {
+//		for (int i = 0; i < 8; i++) {
+//			unsigned long birthdayA = GET_BIRTHDAY(hashes[nonceA+i]);
+//			if (birthdayA == birthdayB && (nonceA+i) != nonce) {
+			if (nonceA>>3 != nonce>>3) {
 				uint32_t pos = atomic_inc(collision_count);
 				collisions[pos].nonce_b = nonce;
 				collisions[pos].nonce_a = nonceA;
 				collisions[pos].birthday = birthdayB;
 			}
-		}
+//		}
 	}
 
 }
