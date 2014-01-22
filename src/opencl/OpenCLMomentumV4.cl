@@ -28,15 +28,15 @@ kernel void kernel_clean_hash_table(global uint32_t * hash_table) {
 }
 
 // first pass, hashes
-kernel void calculate_all_hashes(constant char * message,
+kernel void calculate_all_hashes(constant uint32_t * message,
 								 global uint64_t * hashes) {
 	size_t id = get_global_id(0);
 	uint32_t nonce = (id*8);
-	char tempHash[36];
+	uint32_t tempHash[9];
 
+	tempHash[0] = nonce;
 	#pragma unroll
-	for (int i = 0; i < 32; i++) tempHash[i+4] = message[i];
-	*((uint32_t*)tempHash) = nonce;
+	for (int i = 0; i < 8; i++) tempHash[i+1] = message[i];
 
     sha512_ctx sctx;
     init_ctx(&sctx);
@@ -74,9 +74,10 @@ kernel void find_collisions(global uint64_t * hashes,
 	unsigned long birthdayB = GET_BIRTHDAY(hashes[nonce]);
 	unsigned int collisionKey = (unsigned int)((birthdayB>>18) & COLLISION_KEY_MASK);
 	unsigned long birthday = birthdayB % (HASH_TABLE_SIZE);
-	if( hash_table[birthday] && ((hash_table[birthday]&COLLISION_KEY_MASK) == collisionKey)) {
+	unsigned int ht_value = hash_table[birthday];
+	if( ht_value && ((ht_value&COLLISION_KEY_MASK) == collisionKey)) {
 		// collision candidate
-		unsigned int nonceA = (hash_table[birthday]&~COLLISION_KEY_MASK)<<3;
+		unsigned int nonceA = (ht_value&~COLLISION_KEY_MASK)<<3;
 		for (int i = 0; i < 8; i++) {
 			unsigned long birthdayA = GET_BIRTHDAY(hashes[nonceA+i]);
 			if (birthdayA == birthdayB && (nonceA+i) != nonce) {
