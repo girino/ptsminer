@@ -13,8 +13,6 @@
  * repository as the file girino_license.txt
  *
  */
-#include <libkern/OSByteOrder.h>
-
 #include "OpenCLMomentumV6.h"
 #include <stdlib.h>
 #include <string.h>
