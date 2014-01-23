@@ -94,7 +94,7 @@ __constant uint64_t k[] = {
 	    0x6c44198c4a475817L,
 };
 
-void sha512_block(uint64_t H[8], const uint64_t data[5])
+void sha512_block(uint64_t H[8], uint64_t w[16])
 {
   uint64_t a = iv512[0];
   uint64_t b = iv512[1];
@@ -104,24 +104,6 @@ void sha512_block(uint64_t H[8], const uint64_t data[5])
   uint64_t f = iv512[5];
   uint64_t g = iv512[6];
   uint64_t h = iv512[7];
-
-  uint64_t w[16];
-
-	/* This can all be factored out onto the CPU setup, but let's
-	 * get it working properly first. */
-	/* n.b. - that optimizatoin of removing the swaps into setup
-	 * will also work for our CPU version.  Just sayin' */
-//#pragma unroll 16
-	/* Lots of these middle entries are zero because of the pad */
-        w[0] = SWAP64(data[0]);
-#pragma unroll
-	for (int i = 1; i < 5; i++)
-		w[i] = data[i];
-#pragma unroll
-	for (int i = 5; i < 15; i++) {
-	  w[i] = 0;
-	}
-	w[15] = 0x120; /* SWAP64(0x2001000000000000ULL); */
 
 	uint64_t t1, t2;
 
@@ -197,17 +179,30 @@ kernel void calculate_all_hashes(constant uint64_t * message,
 	uint32_t spot = (id*8);
 
 	uint64_t H[8];
-	uint64_t D[5];
-    for (int i = 0; i < 5; i++) {
-	    D[i] = message[i]; /* constant memory would be better */
-	}
+//	uint64_t D[5];
+//    for (int i = 0; i < 5; i++) {
+//	    D[i] = message[i]; /* constant memory would be better */
+//	}
+//	D[0] = (D[0] & 0xffffffff00000000) | (spot);
+//	for (int i = 1; i < 5; i++) {
+//	    D[i] = SWAP64(D[i]);
+//	}
 
-	D[0] = (D[0] & 0xffffffff00000000) | (spot);
-	for (int i = 1; i < 5; i++) {
-	    D[i] = SWAP64(D[i]);
-	}
+    uint64_t w[16];
+    uint64_t tmp = (message[0] & 0xffffffff00000000) | (spot);
+    w[0] = SWAP64(tmp);
+  	#pragma unroll
+  	for (int i = 1; i < 5; i++) {
+  		w[i] = message[i];
+  	}
+  	#pragma unroll
+  	for (int i = 5; i < 15; i++) {
+  	  w[i] = 0;
+  	}
+  	w[15] = 0x120; /* SWAP64(0x2001000000000000ULL); */
 
-	sha512_block(H, D);
+
+	sha512_block(H, w);
 
 	for (int i = 0; i < 8; i++) {
 		hashes[spot+i] = H[i];

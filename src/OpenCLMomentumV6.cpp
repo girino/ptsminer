@@ -104,6 +104,15 @@ OpenCLMomentumV6::~OpenCLMomentumV6() {
 	// oops, memory was leeeeeeaking...
 	delete queue;
 }
+#define SWAP64(n) \
+            (((n) << 56)                      \
+          | (((n) & 0xff00) << 40)            \
+          | (((n) & 0xff0000) << 24)          \
+          | (((n) & 0xff000000) << 8)         \
+          | (((n) >> 8) & 0xff000000)         \
+          | (((n) >> 24) & 0xff0000)          \
+          | (((n) >> 40) & 0xff00)            \
+          | ((n) >> 56))
 
 void OpenCLMomentumV6::find_collisions(uint8_t* message, collision_struct* out_buff, size_t* out_count) {
 
@@ -120,6 +129,10 @@ void OpenCLMomentumV6::find_collisions(uint8_t* message, collision_struct* out_b
 	SHA512_PreFinal(&c512_avxsse);
 
 	*(uint32_t *)(&c512_avxsse.buffer.bytes[0]) = 0;
+	uint64_t * swap_helper = (uint64_t*)(&c512_avxsse.buffer.bytes[0]);
+	for (int i = 1; i < 5; i++) {
+		swap_helper[i] = SWAP64(swap_helper[i]);
+	}
 
 	OpenCLContext *context = OpenCLMain::getInstance().getDevice(device_num)->getContext();
 	OpenCLProgram *program = context->getProgram(0);
