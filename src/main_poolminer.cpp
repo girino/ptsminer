@@ -692,8 +692,6 @@ int main(int argc, char **argv)
 		else if (mode_param == "gpuv3") gpu_ver = GPUV3;
 		else if (mode_param == "gpuv4") gpu_ver = GPUV4;
 		else if (mode_param == "gpuv5") gpu_ver = GPUV5;
-		else if (mode_param == "gpuv4amd") gpu_ver = GPUV4_AMD;
-		else if (mode_param == "gpuv3amd") gpu_ver = GPUV3_AMD;
 		else if (mode_param == "gpuv6") gpu_ver = GPUV6;
 	} else {
 #ifdef	__x86_64__

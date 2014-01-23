@@ -16,8 +16,6 @@
 #include "sha_utils.h"
 #include "OpenCLMomentumV3.h"
 #include "OpenCLMomentumV4.h"
-#include "OpenCLMomentumV4_AMD.h"
-#include "OpenCLMomentumV3_AMD.h"
 #include "OpenCLMomentumV5.h"
 #include "OpenCLMomentumV6.h"
 #include "OpenCLMomentum2.h"
@@ -1024,10 +1022,6 @@ CProtoshareProcessorGPU::CProtoshareProcessorGPU(SHAMODE _shamode,
 		M1 = new OpenCLMomentumV4(_collisionTableBits, _device_num);
 	} else if (gpu_algorithm == GPUV5) {
 		M1 = new OpenCLMomentumV5(_collisionTableBits, _device_num);
-	} else if (gpu_algorithm == GPUV4_AMD) {
-		M1 = new OpenCLMomentumV4_AMD(_collisionTableBits, _device_num);
-	} else if (gpu_algorithm == GPUV3_AMD) {
-		M1 = new OpenCLMomentumV3_AMD(_collisionTableBits, _device_num);
 	} else if (gpu_algorithm == GPUV6) {
 		M1 = new OpenCLMomentumV6(_collisionTableBits, _device_num);
 	} else {
