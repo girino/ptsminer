@@ -49,16 +49,9 @@ kernel void calculate_all_hashes(constant char * message,
     ctx_update(local_ctx+lid, tempHashes+local_temp_idx, 36);
     sha512_digest(local_ctx+lid, local_hashes+local_idx);
 
-    mem_fence(CLK_LOCAL_MEM_FENCE);
+    event_t e = async_work_group_copy(hashes+(get_group_id(0)*get_local_size(0)*8), local_hashes, get_local_size(0)*8*sizeof(uint64_t), 0);
+    wait_group_events(1, &e);
 
-    hashes[nonce] = local_hashes[local_idx];
-    hashes[nonce+1] = local_hashes[local_idx+1];
-    hashes[nonce+2] = local_hashes[local_idx+2];
-    hashes[nonce+3] = local_hashes[local_idx+3];
-    hashes[nonce+4] = local_hashes[local_idx+4];
-    hashes[nonce+5] = local_hashes[local_idx+5];
-    hashes[nonce+6] = local_hashes[local_idx+6];
-    hashes[nonce+7] = local_hashes[local_idx+7];
 }
 
 // second pass, fill table

@@ -370,7 +370,7 @@ SHA512_Final (SHA512_Context *sc, uint8_t hash[SHA512_HASH_SIZE])
 	_final (sc, hash, SHA512_HASH_WORDS, 0);
 }
 
-inline void
+void
 SHA512_Update_Simple (SHA512_Context *sc, const void *vdata, size_t len)
 {
 	const uint8_t *data = (const uint8_t *)vdata;
