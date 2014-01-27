@@ -25,6 +25,16 @@ extern "C" {
 #include "sph_sha2.h"
 }
 
+#define SWAP64(n) \
+            (((n) << 56)                      \
+          | (((n) & 0xff00) << 40)            \
+          | (((n) & 0xff0000) << 24)          \
+          | (((n) & 0xff000000) << 8)         \
+          | (((n) >> 8) & 0xff000000)         \
+          | (((n) >> 24) & 0xff0000)          \
+          | (((n) >> 40) & 0xff00)            \
+          | ((n) >> 56))
+
 void sha512_func_fips(unsigned char* in, unsigned int size, unsigned char* out);
 void sha512_func_avx(unsigned char* in, unsigned int size, unsigned char* out);
 void sha512_func_sph(unsigned char* in, unsigned int size, unsigned char* out);
