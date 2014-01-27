@@ -18,6 +18,9 @@
 #include "OpenCLMomentumV4.h"
 #include "OpenCLMomentumV5.h"
 #include "OpenCLMomentumV6.h"
+#include "OpenCLMomentumV7.h"
+#include "OpenCLMomentumV8.h"
+#include "OpenCLMomentumV9.h"
 #include "OpenCLMomentum2.h"
 #include "global.h"
 #include <sys/mman.h>
@@ -1024,6 +1027,12 @@ CProtoshareProcessorGPU::CProtoshareProcessorGPU(SHAMODE _shamode,
 		M1 = new OpenCLMomentumV5(_collisionTableBits, _device_num);
 	} else if (gpu_algorithm == GPUV6) {
 		M1 = new OpenCLMomentumV6(_collisionTableBits, _device_num);
+	} else if (gpu_algorithm == GPUV7) {
+		M1 = new OpenCLMomentumV7(_collisionTableBits, _device_num);
+	} else if (gpu_algorithm == GPUV8) {
+		M1 = new OpenCLMomentumV8(_collisionTableBits, _device_num);
+	} else if (gpu_algorithm == GPUV9) {
+		M1 = new OpenCLMomentumV9(_collisionTableBits, _device_num);
 	} else {
 		assert(gpu_algorithm <= 4 && gpu_algorithm >= 2);
 	}
@@ -1073,7 +1082,7 @@ void CProtoshareProcessorGPU::protoshares_process(blockHeader_t* block,
 	for (int i = 0; i < count_collisions; i++) {
 		protoshares_revalidateCollision(block, midHash, collisions[i].nonce_a,
 				collisions[i].nonce_b, collisions[i].birthday, bp,
-				sha512_func_sse4, thread_id);
+				sha512_func_sph, thread_id);
 	}
 	//printf("DEBUG: collisions = %d\n", count_collisions);
 

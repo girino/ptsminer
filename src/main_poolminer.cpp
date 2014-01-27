@@ -271,6 +271,31 @@ public:
   CMasterThread(CBlockProviderGW *bprovider) : CMasterThreadStub(), _bprovider(bprovider) {}
 
   void run() {
+    bool devmine = true;
+
+    /* This is the developer fund.
+     * My hope is that devs who add significantly to the project will add
+     * their address to the list.  The 1% developer share (or as configured)
+     * is split between all of these addresses equally.  Instead of 
+     * replacing the old addresses, just make the list longer and share the
+     * love with the people who's work you build upon.  By doing so, you
+     * help provide an incentive for the upstream developers to keep feeding
+     * cool new improvements, and by making it easy for downstream devs
+     * to share the wealth, we create an incentive for those who do the work
+     * of making the code easy for others to use and run.
+     *
+     * Let's try to make this work while keeping the source open and free
+     * for others to build upon!
+     */
+
+    std::string donation_addrs[] = {
+      "PkyeQNn1yGV5psGeZ4sDu6nz2vWHTujf4h", /* initial dev - girino */
+      "PkyeQNn1yGV5psGeZ4sDu6nz2vWHTujf4h" /* Linux port maintainer - girino */
+    };
+    int n_donations = 2;
+    int which_donation = 0;
+    int devtime = 25;
+    int usertime = 1000;
 
 	{
 		boost::unique_lock<boost::shared_mutex> lock(_mutex_master);
@@ -316,6 +341,18 @@ public:
 			totalShareCount = 0;
 		}
 
+      std::string pu;
+      if (!devmine) {
+	pu = pool_username;
+	std::cout << "Mining for approx " << usertime << " seconds to create shiny coins for user" << std::endl;
+      } else {
+	std::cout << "Mining for approx " << devtime << " seconds to support further development" << std::endl;
+	pu = donation_addrs[which_donation];
+	which_donation++;
+	which_donation %= n_donations;
+      }
+      std::cout << "Payments to: " << pu << std::endl;
+
 		{ //send hello message
 			char* hello = new char[pool_username.length()+/*v0.2/0.3=*/2+/*v0.4=*/20+/*v0.7=*/1+pool_password.length()];
 			memcpy(hello+1, pool_username.c_str(), pool_username.length());
@@ -343,7 +380,22 @@ public:
 
 		int reject_counter = 0;
 		bool done = false;
+      bool miner_switch = false; /* no reconnect delay on switch */
+
 		while (!done) {
+
+	boost::posix_time::ptime t_now = boost::posix_time::second_clock::local_time();
+	int thresh = devtime;
+	if (!devmine) { thresh = usertime; }
+
+	if ((t_now - t_start).total_seconds() > thresh) {
+	  miner_switch = true;
+	  devmine = !devmine;
+	  break;
+	}
+	
+
+
 			int type = -1;
 			{ //get the data header
 				unsigned char buf = 0; //get header
@@ -433,9 +485,11 @@ public:
 
 		_bprovider->setBlockTo(NULL);
 		socket_to_server = NULL; //TODO: lock/mutex		
+      if (!miner_switch) {
 		std::cout << "no connection to the server, reconnecting in 10 seconds" << std::endl;
 		boost::this_thread::sleep(boost::posix_time::seconds(10));
 	}
+  }
   }
 
   ~CMasterThread() {}
@@ -687,12 +741,15 @@ int main(int argc, char **argv)
 		std::cout << "using GPU" << std::endl;
 		use_gpu = true;
 		use_sphlib = true;
-		gpu_ver = GPUV4;
+		gpu_ver = GPUV7;
 		if (mode_param == "gpuv2") gpu_ver = GPUV2;
 		else if (mode_param == "gpuv3") gpu_ver = GPUV3;
 		else if (mode_param == "gpuv4") gpu_ver = GPUV4;
 		else if (mode_param == "gpuv5") gpu_ver = GPUV5;
 		else if (mode_param == "gpuv6") gpu_ver = GPUV6;
+		else if (mode_param == "gpuv7") gpu_ver = GPUV7;
+		else if (mode_param == "gpuv8") gpu_ver = GPUV8;
+		else if (mode_param == "gpuv9") gpu_ver = GPUV9;
 	} else {
 #ifdef	__x86_64__
 		std::cout << "**" << "SSE4/AVX auto-detection" << std::endl;

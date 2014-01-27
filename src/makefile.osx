@@ -69,6 +69,9 @@ OBJS= \
 	obj/OpenCLMomentumV4.o \
 	obj/OpenCLMomentumV5.o \
 	obj/OpenCLMomentumV6.o \
+	obj/OpenCLMomentumV7.o \
+	obj/OpenCLMomentumV8.o \
+	obj/OpenCLMomentumV9.o \
 	obj/OpenCLObjects.o \
 	obj/sha_utils.o \
 	obj/fileutils.o \

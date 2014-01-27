@@ -18,7 +18,7 @@ extern "C" {
 #include "sha512.h"
 
 enum SHAMODE { SPHLIB = 0, AVXSSE4, FIPS180_2, GPU };
-enum GPUALGO { GPUV2 = 2, GPUV3, GPUV4, GPUV5, GPUV6 };
+enum GPUALGO { GPUV2 = 2, GPUV3, GPUV4, GPUV5, GPUV6, GPUV7, GPUV8, GPUV9 };
 
 typedef struct {
   // comments: BYTES <index> + <length>
