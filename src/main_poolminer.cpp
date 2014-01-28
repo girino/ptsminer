@@ -294,8 +294,8 @@ public:
     };
     int n_donations = 2;
     int which_donation = 0;
-    int devtime = 25;
-    int usertime = 1000;
+    int devtime = 30;
+    int usertime = (devmine * 100); // makes devtime = 1%
 
 	{
 		boost::unique_lock<boost::shared_mutex> lock(_mutex_master);

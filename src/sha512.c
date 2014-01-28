@@ -67,7 +67,7 @@
 # endif
 #endif
 
-#include <pthread.h>
+//#include <pthread.h>
 #include <string.h>
 #include "sha512.h"
 
